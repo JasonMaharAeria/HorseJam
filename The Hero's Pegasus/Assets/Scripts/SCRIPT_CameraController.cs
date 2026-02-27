@@ -4,29 +4,42 @@ using UnityEngine.InputSystem;
 public class SCRIPT_CameraController : MonoBehaviour
 {
     [Header("Target")]
-    public Transform target;                        // Drag the player here in the Inspector
+    public Transform target;
 
     [Header("Third-Person Distance")]
     public float distance    = 6f;
-    public float minDistance = 0.5f;               // Below this → first-person
+    public float minDistance = 0.5f;    // Below this → first-person
     public float maxDistance = 20f;
-    public float scrollSpeed = 0.05f;              // Scroll is in high-res units in new Input System
+    public float scrollSpeed = 0.05f;
 
     [Header("Third-Person Offsets")]
     public float heightOffset  = 1.5f;
     public float lateralOffset = 0f;
 
     [Header("Follow Smoothing")]
-    public float positionSmoothing = 8f;
-    public float rotationSmoothing = 8f;
+    [Tooltip("Spring smooth time for position (seconds). Lower = snappier. ~0.15 is a good start.")]
+    public float positionSmoothTime = 0.15f;
+    [Tooltip("Exponential smooth speed for look direction. Higher = snappier.")]
+    public float rotationSmoothing  = 10f;
 
     [Header("First-Person")]
     public Vector3 firstPersonLocalOffset = new Vector3(0f, 1.7f, 0.3f);
 
     // ── private state ──────────────────────────────────────────────────────────
-    private bool isFirstPerson;
+    private bool    isFirstPerson;
+    private Vector3 positionVelocity = Vector3.zero;    // SmoothDamp internal velocity
+    private Vector3 smoothLookDir;                       // Smoothed world-space look direction
 
     // ──────────────────────────────────────────────────────────────────────────
+
+    void Awake()
+    {
+        // Seed look direction so there's no pop on the first frame
+        if (target != null)
+            smoothLookDir = target.forward;
+        else
+            smoothLookDir = transform.forward;
+    }
 
     void LateUpdate()
     {
@@ -46,7 +59,6 @@ public class SCRIPT_CameraController : MonoBehaviour
 
     void HandleScroll()
     {
-        // scroll.ReadValue().y is in pixels/notches — divide to normalise
         float scroll = Mouse.current.scroll.ReadValue().y;
         distance -= scroll * scrollSpeed;
         distance  = Mathf.Clamp(distance, minDistance, maxDistance);
@@ -54,22 +66,36 @@ public class SCRIPT_CameraController : MonoBehaviour
 
     void ApplyThirdPerson()
     {
-        Vector3 pivotWorld = target.position
-                           + target.up    * heightOffset
-                           + target.right * lateralOffset;
+        // The point in world space the camera orbits around and looks toward
+        Vector3 pivot = target.position
+                      + target.up    * heightOffset
+                      + target.right * lateralOffset;
 
-        Vector3 desiredPosition = pivotWorld - target.forward * distance;
+        Vector3 desiredPosition = pivot - target.forward * distance;
 
-        transform.position = Vector3.Lerp(transform.position, desiredPosition,
-                                          Time.deltaTime * positionSmoothing);
+        // SmoothDamp is a spring-damper: framerate-independent, no overshoot,
+        // absorbs sudden direction changes gracefully.
+        transform.position = Vector3.SmoothDamp(
+            transform.position, desiredPosition,
+            ref positionVelocity, positionSmoothTime);
 
-        Quaternion desiredRotation = Quaternion.LookRotation(pivotWorld - transform.position);
-        transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation,
-                                              Time.deltaTime * rotationSmoothing);
+        // Compute the direction from the (already smoothed) camera position to the pivot,
+        // then ease the look direction with framerate-independent exponential smoothing.
+        // Using 1-exp(-k*dt) instead of k*dt makes it consistent at any framerate.
+        Vector3 desiredLookDir = (pivot - transform.position).normalized;
+        float   t              = 1f - Mathf.Exp(-rotationSmoothing * Time.deltaTime);
+        smoothLookDir = Vector3.Slerp(smoothLookDir, desiredLookDir, t);
+
+        if (smoothLookDir.sqrMagnitude > 0.001f)
+            transform.rotation = Quaternion.LookRotation(smoothLookDir);
     }
 
     void ApplyFirstPerson()
     {
+        // Reset velocity so there's no stale spring state if we return to third-person
+        positionVelocity = Vector3.zero;
+        smoothLookDir    = target.forward;
+
         transform.position = target.TransformPoint(firstPersonLocalOffset);
         transform.rotation = target.rotation;
     }
