@@ -47,4 +47,5 @@ public class SCRIPT_LaserController : MonoBehaviour
             laserParticles.SetActive(false);
         }
     }
+
 }

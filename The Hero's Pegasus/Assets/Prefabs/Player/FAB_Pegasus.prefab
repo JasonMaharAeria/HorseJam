@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 6526892700965336871}
   m_Layer: 0
   m_Name: FAB_Pegasus
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -156,11 +156,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_PlayerMovementController
   flightSpeed: 65.7
-  dashSpeed: 60
+  dashSpeed: 80
   dashRampUp: 8
   dashRampDown: 3
   dashParticles: {fileID: 7730816890873377192}
-  gravitySpeedBonus: 10
+  gravitySpeedBonus: 30
   yawSensitivity: 2
   pitchSensitivity: 2
   maxPitchAngle: 80
@@ -168,7 +168,7 @@ MonoBehaviour:
   minTurnMultiplier: 0.06
   referenceSpeed: 30
   enableBanking: 1
-  bankStrength: 20
+  bankStrength: 40
   bankSmoothing: 5
   globalVolume: {fileID: 0}
   dashLensDistortionIntensity: -0.75
@@ -3209,11 +3209,19 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: CollisionModule.type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: LightsModule.enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: VelocityModule.enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: CollisionModule.enabled
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
@@ -3251,6 +3259,10 @@ PrefabInstance:
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: InitialModule.startSpeed.scalar
       value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: CollisionModule.collisionMessages
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: NoiseModule.positionAmount.scalar
@@ -3306,6 +3318,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: TrailModule.colorOverLifetime.minMaxState
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: CollisionModule.m_EnergyLossOnCollision.scalar
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
@@ -3507,13 +3523,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 521397760463125282}
   m_SourcePrefab: {fileID: 100100000, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
 --- !u!1 &334107922181665287 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
   m_PrefabInstance: {fileID: 8097827224798941145}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &521397760463125282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334107922181665287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f026ab1207b2c6409d6ea7adefa05ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_LaserHitRelay
 --- !u!4 &3436029403893014984 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6903587758321167889, guid: bba1f912eb767974c959919bc1d7419d, type: 3}

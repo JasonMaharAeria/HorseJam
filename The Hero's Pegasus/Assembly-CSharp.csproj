@@ -49,12 +49,18 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.7f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\SCRIPT_EnemyBase.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_WaveController.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_FogController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_EnemyType1.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_LaserHitRelay.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_PegasusAnimationController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_EnemyType2.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_PlayerMovementController.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_CloudManager.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_CameraController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_EnemyType3.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LaserController.cs" />
   </ItemGroup>
   <ItemGroup>
