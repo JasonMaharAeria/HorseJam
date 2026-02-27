@@ -10,7 +10,9 @@ public class SCRIPT_LaserController : MonoBehaviour
     [Tooltip("The particle system GameObject to activate when firing")]
     public GameObject laserParticles;
 
-    private ParticleSystem ps;
+    // Cloud manager polls these to run particle-proximity destruction
+    public bool            IsLaserActive { get; private set; }
+    public ParticleSystem  LaserPS       { get; private set; }
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -22,7 +24,7 @@ public class SCRIPT_LaserController : MonoBehaviour
             return;
         }
 
-        ps = laserParticles.GetComponentInChildren<ParticleSystem>();
+        LaserPS = laserParticles.GetComponentInChildren<ParticleSystem>();
         laserParticles.SetActive(false);
     }
 
@@ -32,14 +34,16 @@ public class SCRIPT_LaserController : MonoBehaviour
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
+            IsLaserActive = true;
             laserParticles.SetActive(true);
-            ps?.Play(withChildren: true);
+            if (LaserPS != null) LaserPS.Play(withChildren: true);
         }
         else if (Mouse.current.leftButton.wasReleasedThisFrame)
         {
+            IsLaserActive = false;
             // StopEmittingAndClear removes in-flight particles immediately.
             // Swap to StopEmitting if you want existing particles to finish their lifetime.
-            ps?.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            if (LaserPS != null) LaserPS.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
             laserParticles.SetActive(false);
         }
     }
