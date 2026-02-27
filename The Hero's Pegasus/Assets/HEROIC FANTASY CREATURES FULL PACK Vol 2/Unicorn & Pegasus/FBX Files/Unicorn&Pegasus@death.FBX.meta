@@ -1,0 +1,242 @@
+fileFormatVersion: 2
+guid: 7c92fbb1216360647b0b76ac8a8b3717
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: HAIR_A_1
+    100002: HAIR_A_2
+    100004: HAIR_A_3
+    100006: HAIR_B_
+    100008: HAIR_B_2
+    100010: HAIR_B_3
+    100012: HAIR_C_1
+    100014: HAIR_C_2
+    100016: HAIR_C_3
+    100018: HAIR_C_4
+    100020: HAIR_D_1
+    100022: HAIR_D_2
+    100024: HAIR_D_3
+    100026: HAIR_D_4
+    100028: HAIR_E_1
+    100030: HAIR_E_2
+    100032: HAIR_E_3
+    100034: HAIR_E_4
+    100036: HAIR_F_1
+    100038: HAIR_F_2
+    100040: HAIR_F_3
+    100042: HAIR_F_4
+    100044: HAIR_G_1
+    100046: HAIR_G_2
+    100048: HAIR_G_3
+    100050: HAIR_G_4
+    100052: HAIR_H_1
+    100054: HAIR_H_2
+    100056: HAIR_H_3
+    100058: HAIR_H_4
+    100060: root
+    100062: //RootNode
+    100064: UNICORN_
+    100066: UNICORN_ Head
+    100068: UNICORN_ L Calf
+    100070: UNICORN_ L Clavicle
+    100072: UNICORN_ L Finger0
+    100074: UNICORN_ L Foot
+    100076: UNICORN_ L Forearm
+    100078: UNICORN_ L Hand
+    100080: UNICORN_ L HorseLink
+    100082: UNICORN_ L Thigh
+    100084: UNICORN_ L UpperArm
+    100086: UNICORN_ Neck
+    100088: UNICORN_ Neck1
+    100090: UNICORN_ Neck2
+    100092: UNICORN_ Neck3
+    100094: UNICORN_ Pelvis
+    100096: UNICORN_ R Calf
+    100098: UNICORN_ R Clavicle
+    100100: UNICORN_ R Finger0
+    100102: UNICORN_ R Foot
+    100104: UNICORN_ R Forearm
+    100106: UNICORN_ R Hand
+    100108: UNICORN_ R HorseLink
+    100110: UNICORN_ R Thigh
+    100112: UNICORN_ R UpperArm
+    100114: UNICORN_ Spine
+    100116: UNICORN_ Spine1
+    100118: UNICORN_ Tail
+    100120: UNICORN_ Tail1
+    100122: UNICORN_ Tail2
+    100124: UNICORN_ Tail3
+    100126: UNICORN_ Tail4
+    100128: WING_L_01
+    100130: WING_L_02
+    100132: WING_L_03
+    100134: WING_R_01
+    100136: WING_R_02
+    100138: WING_R_03
+    400000: HAIR_A_1
+    400002: HAIR_A_2
+    400004: HAIR_A_3
+    400006: HAIR_B_
+    400008: HAIR_B_2
+    400010: HAIR_B_3
+    400012: HAIR_C_1
+    400014: HAIR_C_2
+    400016: HAIR_C_3
+    400018: HAIR_C_4
+    400020: HAIR_D_1
+    400022: HAIR_D_2
+    400024: HAIR_D_3
+    400026: HAIR_D_4
+    400028: HAIR_E_1
+    400030: HAIR_E_2
+    400032: HAIR_E_3
+    400034: HAIR_E_4
+    400036: HAIR_F_1
+    400038: HAIR_F_2
+    400040: HAIR_F_3
+    400042: HAIR_F_4
+    400044: HAIR_G_1
+    400046: HAIR_G_2
+    400048: HAIR_G_3
+    400050: HAIR_G_4
+    400052: HAIR_H_1
+    400054: HAIR_H_2
+    400056: HAIR_H_3
+    400058: HAIR_H_4
+    400060: root
+    400062: //RootNode
+    400064: UNICORN_
+    400066: UNICORN_ Head
+    400068: UNICORN_ L Calf
+    400070: UNICORN_ L Clavicle
+    400072: UNICORN_ L Finger0
+    400074: UNICORN_ L Foot
+    400076: UNICORN_ L Forearm
+    400078: UNICORN_ L Hand
+    400080: UNICORN_ L HorseLink
+    400082: UNICORN_ L Thigh
+    400084: UNICORN_ L UpperArm
+    400086: UNICORN_ Neck
+    400088: UNICORN_ Neck1
+    400090: UNICORN_ Neck2
+    400092: UNICORN_ Neck3
+    400094: UNICORN_ Pelvis
+    400096: UNICORN_ R Calf
+    400098: UNICORN_ R Clavicle
+    400100: UNICORN_ R Finger0
+    400102: UNICORN_ R Foot
+    400104: UNICORN_ R Forearm
+    400106: UNICORN_ R Hand
+    400108: UNICORN_ R HorseLink
+    400110: UNICORN_ R Thigh
+    400112: UNICORN_ R UpperArm
+    400114: UNICORN_ Spine
+    400116: UNICORN_ Spine1
+    400118: UNICORN_ Tail
+    400120: UNICORN_ Tail1
+    400122: UNICORN_ Tail2
+    400124: UNICORN_ Tail3
+    400126: UNICORN_ Tail4
+    400128: WING_L_01
+    400130: WING_L_02
+    400132: WING_L_03
+    400134: WING_R_01
+    400136: WING_R_02
+    400138: WING_R_03
+    7400000: Take 001
+    9500000: //RootNode
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 0
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 1
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: root
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 9bfefecb70347374d868c2965811ac92,
+    type: 3}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 33915
+  packageName: UNICORN AND PEGASUS
+  packageVersion: 2.1
+  assetPath: Assets/HEROIC FANTASY CREATURES FULL PACK Vol 2/Unicorn & Pegasus/FBX
+    Files/Unicorn&Pegasus@death.FBX
+  uploadId: 397809

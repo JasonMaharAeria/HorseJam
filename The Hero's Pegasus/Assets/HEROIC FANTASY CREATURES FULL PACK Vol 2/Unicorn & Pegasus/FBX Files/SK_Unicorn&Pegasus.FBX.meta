@@ -1,0 +1,289 @@
+fileFormatVersion: 2
+guid: 9bfefecb70347374d868c2965811ac92
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: BASE_HORSE
+    100002: HAIR_A_1
+    100004: HAIR_A_2
+    100006: HAIR_A_3
+    100008: HAIR_B_
+    100010: HAIR_B_2
+    100012: HAIR_B_3
+    100014: HAIR_C_1
+    100016: HAIR_C_2
+    100018: HAIR_C_3
+    100020: HAIR_C_4
+    100022: HAIR_D_1
+    100024: HAIR_D_2
+    100026: HAIR_D_3
+    100028: HAIR_D_4
+    100030: HAIR_E_1
+    100032: HAIR_E_2
+    100034: HAIR_E_3
+    100036: HAIR_E_4
+    100038: HAIR_F_1
+    100040: HAIR_F_2
+    100042: HAIR_F_3
+    100044: HAIR_F_4
+    100046: HAIR_G_1
+    100048: HAIR_G_2
+    100050: HAIR_G_3
+    100052: HAIR_G_4
+    100054: HAIR_H_1
+    100056: HAIR_H_2
+    100058: HAIR_H_3
+    100060: HAIR_H_4
+    100062: PEGAZUS_WINGS
+    100064: root
+    100066: //RootNode
+    100068: UNICORN_
+    100070: UNICORN_ Head
+    100072: UNICORN_ L Calf
+    100074: UNICORN_ L Clavicle
+    100076: UNICORN_ L Finger0
+    100078: UNICORN_ L Foot
+    100080: UNICORN_ L Forearm
+    100082: UNICORN_ L Hand
+    100084: UNICORN_ L HorseLink
+    100086: UNICORN_ L Thigh
+    100088: UNICORN_ L UpperArm
+    100090: UNICORN_ Neck
+    100092: UNICORN_ Neck1
+    100094: UNICORN_ Neck2
+    100096: UNICORN_ Neck3
+    100098: UNICORN_ Pelvis
+    100100: UNICORN_ R Calf
+    100102: UNICORN_ R Clavicle
+    100104: UNICORN_ R Finger0
+    100106: UNICORN_ R Foot
+    100108: UNICORN_ R Forearm
+    100110: UNICORN_ R Hand
+    100112: UNICORN_ R HorseLink
+    100114: UNICORN_ R Thigh
+    100116: UNICORN_ R UpperArm
+    100118: UNICORN_ Spine
+    100120: UNICORN_ Spine1
+    100122: UNICORN_ Tail
+    100124: UNICORN_ Tail1
+    100126: UNICORN_ Tail2
+    100128: UNICORN_ Tail3
+    100130: UNICORN_ Tail4
+    100132: UNICORN_HORN
+    100134: WING_L_01
+    100136: WING_L_02
+    100138: WING_L_03
+    100140: WING_R_01
+    100142: WING_R_02
+    100144: WING_R_03
+    100146: SK_BaseHorse
+    100148: SK_PegasusWings
+    100150: SM_UnicornHorn
+    100152: SK_UnicornHorn
+    100154: SK_BaseHorse2Sided
+    100156: SK_PegasusWings2Sided
+    400000: BASE_HORSE
+    400002: HAIR_A_1
+    400004: HAIR_A_2
+    400006: HAIR_A_3
+    400008: HAIR_B_
+    400010: HAIR_B_2
+    400012: HAIR_B_3
+    400014: HAIR_C_1
+    400016: HAIR_C_2
+    400018: HAIR_C_3
+    400020: HAIR_C_4
+    400022: HAIR_D_1
+    400024: HAIR_D_2
+    400026: HAIR_D_3
+    400028: HAIR_D_4
+    400030: HAIR_E_1
+    400032: HAIR_E_2
+    400034: HAIR_E_3
+    400036: HAIR_E_4
+    400038: HAIR_F_1
+    400040: HAIR_F_2
+    400042: HAIR_F_3
+    400044: HAIR_F_4
+    400046: HAIR_G_1
+    400048: HAIR_G_2
+    400050: HAIR_G_3
+    400052: HAIR_G_4
+    400054: HAIR_H_1
+    400056: HAIR_H_2
+    400058: HAIR_H_3
+    400060: HAIR_H_4
+    400062: PEGAZUS_WINGS
+    400064: root
+    400066: //RootNode
+    400068: UNICORN_
+    400070: UNICORN_ Head
+    400072: UNICORN_ L Calf
+    400074: UNICORN_ L Clavicle
+    400076: UNICORN_ L Finger0
+    400078: UNICORN_ L Foot
+    400080: UNICORN_ L Forearm
+    400082: UNICORN_ L Hand
+    400084: UNICORN_ L HorseLink
+    400086: UNICORN_ L Thigh
+    400088: UNICORN_ L UpperArm
+    400090: UNICORN_ Neck
+    400092: UNICORN_ Neck1
+    400094: UNICORN_ Neck2
+    400096: UNICORN_ Neck3
+    400098: UNICORN_ Pelvis
+    400100: UNICORN_ R Calf
+    400102: UNICORN_ R Clavicle
+    400104: UNICORN_ R Finger0
+    400106: UNICORN_ R Foot
+    400108: UNICORN_ R Forearm
+    400110: UNICORN_ R Hand
+    400112: UNICORN_ R HorseLink
+    400114: UNICORN_ R Thigh
+    400116: UNICORN_ R UpperArm
+    400118: UNICORN_ Spine
+    400120: UNICORN_ Spine1
+    400122: UNICORN_ Tail
+    400124: UNICORN_ Tail1
+    400126: UNICORN_ Tail2
+    400128: UNICORN_ Tail3
+    400130: UNICORN_ Tail4
+    400132: UNICORN_HORN
+    400134: WING_L_01
+    400136: WING_L_02
+    400138: WING_L_03
+    400140: WING_R_01
+    400142: WING_R_02
+    400144: WING_R_03
+    400146: SK_BaseHorse
+    400148: SK_PegasusWings
+    400150: SM_UnicornHorn
+    400152: SK_UnicornHorn
+    400154: SK_BaseHorse2Sided
+    400156: SK_PegasusWings2Sided
+    2100000: UNICORN&PEGAZUS
+    2100002: HAIR_FEATHERS
+    4300000: BASE_HORSE
+    4300002: PEGAZUS_WINGS
+    4300004: UNICORN_HORN
+    4300006: SK_BaseHorse
+    4300008: SK_PegasusWings
+    4300010: SM_UnicornHorn
+    4300012: SK_UnicornHorn
+    4300014: SK_BaseHorse2Sided
+    4300016: SK_PegasusWings2Sided
+    7400000: Take 001
+    9500000: //RootNode
+    13700000: BASE_HORSE
+    13700002: PEGAZUS_WINGS
+    13700004: UNICORN_HORN
+    13700006: SK_BaseHorse
+    13700008: SK_PegasusWings
+    13700010: SM_UnicornHorn
+    13700012: SK_UnicornHorn
+    13700014: SK_BaseHorse2Sided
+    13700016: SK_PegasusWings2Sided
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Hair&Feathers
+    second: {fileID: 2100000, guid: 80c985cbd6c354949b06d44f69657849, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Unicorn&Pegasus
+    second: {fileID: 2100000, guid: 5c7a9bc5ff1eb3b4eb99d33c778afb81, type: 2}
+  materials:
+    importMaterials: 1
+    materialName: 1
+    materialSearch: 1
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 0
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: root
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 33915
+  packageName: UNICORN AND PEGASUS
+  packageVersion: 2.1
+  assetPath: Assets/HEROIC FANTASY CREATURES FULL PACK Vol 2/Unicorn & Pegasus/FBX
+    Files/SK_Unicorn&Pegasus.FBX
+  uploadId: 397809
