@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\SCRIPT_EnemyBase.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_WaveController.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_FogController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_Hero.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyType1.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LaserHitRelay.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_PegasusAnimationController.cs" />
