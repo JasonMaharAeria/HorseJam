@@ -11,9 +11,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float flightSpeed = 20f;
 
     [Header("Dash")]
-    public float dashSpeed     = 60f;
-    public float dashRampUp    = 8f;   // exponential ramp rate toward dashSpeed
-    public float dashRampDown  = 3f;   // exponential ramp rate back to flightSpeed
+    public float      dashSpeed      = 60f;
+    public float      dashRampUp     = 8f;   // exponential ramp rate toward dashSpeed
+    public float      dashRampDown   = 3f;   // exponential ramp rate back to flightSpeed
+    public GameObject dashParticles;          // activated on RMB press, deactivated on release
 
     [Header("Gravity Influence")]
     [Tooltip("Extra speed added when flying straight down (scales with how directly downward you point)")]
@@ -21,8 +22,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     [Header("Steering Sensitivity")]
     public float yawSensitivity   = 0.1f;
-    public float pitchSensitivity = 0.1f;
-    public float maxPitchAngle    = 80f;
+    public float pitchSensitivity = 0.1f; 
+    public float maxPitchAngle    = 80f;  
 
     [Header("Rotational Inertia")]
     [Tooltip("How quickly the pegasus responds to steering. Lower = more inertia / smoother.")]
@@ -63,6 +64,9 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     // and for feeding the speed-based maneuverability calculation.
     private float currentSpeed;
 
+    // Dash particles
+    private ParticleSystem dashPs;
+
     // Post-processing
     private LensDistortion lensDistortion;
     private Vignette       vignette;
@@ -89,6 +93,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible   = false;
+
+        if (dashParticles != null)
+        {
+            dashPs = dashParticles.GetComponentInChildren<ParticleSystem>();
+            dashParticles.SetActive(false);
+        }
 
         InitPostProcessing();
     }
@@ -123,6 +133,21 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     void Update()
     {
         pendingMouseDelta += Mouse.current.delta.ReadValue();
+
+        if (dashParticles != null)
+        {
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                dashParticles.SetActive(true);
+                if (dashPs != null) dashPs.Play(withChildren: true);
+            }
+            else if (Mouse.current.rightButton.wasReleasedThisFrame)
+            {
+                if (dashPs != null) dashPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                dashParticles.SetActive(false);
+            }
+        }
+
         UpdatePostProcessing();
     }
 
