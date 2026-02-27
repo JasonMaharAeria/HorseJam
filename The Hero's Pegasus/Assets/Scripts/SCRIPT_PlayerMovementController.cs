@@ -22,8 +22,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     [Header("Steering Sensitivity")]
     public float yawSensitivity   = 0.1f;
-    public float pitchSensitivity = 0.1f; 
-    public float maxPitchAngle    = 80f;  
+    public float pitchSensitivity = 0.1f;
+    public float maxPitchAngle    = 80f;
 
     [Header("Rotational Inertia")]
     [Tooltip("How quickly the pegasus responds to steering. Lower = more inertia / smoother.")]
@@ -47,6 +47,36 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float dashVignetteIntensity       =  0.5f;
     [Tooltip("How fast the PP effects blend in/out")]
     public float ppBlendSpeed = 6f;
+
+    [Header("Circle Flip — Detection")]
+    [Tooltip("Max seconds to complete the circle gesture before it resets")]
+    public float circleWindowSeconds  = 1.35f;
+    [Tooltip("Minimum mouse speed (px/s) to count toward the circle gesture")]
+    public float circleMinMouseSpeed  = 70f;
+    [Tooltip("Total degrees the mouse direction must rotate to trigger (~345 allows 15° slop)")]
+    public float circleAngleThreshold = 345f;
+    [Tooltip("Degrees of momentary reversal allowed before the gesture resets")]
+    public float circleReverseAllowed = 25f;
+    [Tooltip("Minimum width and height (px) of traced motion bounds to count as a real circle")]
+    public float circleMinDiameter    = 120f;
+    [Tooltip("Minimum total traced distance (px) required before a circle can trigger")]
+    public float circleMinPathLength  = 420f;
+
+    [Header("Circle Flip — Maneuver")]
+    [Tooltip("Seconds for phase 1: vertical inversion to upside-down")]
+    public float flipVerticalDuration   = 0.20f;
+    [Tooltip("Seconds for phase 2: horizontal turnaround back to right-side-up")]
+    public float flipHorizontalDuration = 0.24f;
+    [Tooltip("Fraction of entry speed reached by the end of the maneuver before burst")]
+    [Range(0.1f, 1f)]
+    public float flipSlowMultiplier     = 0.35f;
+    [Tooltip("Speed applied immediately upon and during the burst")]
+    public float burstSpeed             = 90f;
+    [Tooltip("How long the burst speed holds after the flip completes")]
+    public float burstDurationSeconds   = 0.4f;
+    [Tooltip("Minimum seconds between flip triggers")]
+    public float flipCooldownSeconds  = 2.0f;
+    public GameObject flipParticles;
 
     // ── private state ──────────────────────────────────────────────────────────
     private Rigidbody rb;
@@ -73,6 +103,34 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     private float          baseLensDistortion;
     private float          baseVignette;
 
+    // ── circle gesture detection ───────────────────────────────────────────────
+    private float _gestureAccumulatedAngle;
+    private float _gestureElapsed;
+    private float _gesturePrevAngle;
+    private bool  _gestureTracking;
+    private int   _gestureDirection;   // +1 = CCW, -1 = CW
+    private float _gesturePathLength;
+    private Vector2 _gestureTracePos;
+    private Vector2 _gestureTraceMin;
+    private Vector2 _gestureTraceMax;
+
+    // ── flip state machine ─────────────────────────────────────────────────────
+    private enum FlipState { None, VerticalInversion, HorizontalTurn, Bursting }
+    private FlipState _flipState            = FlipState.None;
+    private float     _flipTimer            = 0f;
+    private float     _flipStartYaw         = 0f;
+    private float     _flipStartPitch       = 0f;
+    private float     _flipStartBank        = 0f;
+    private float     _flipEntrySpeed       = 0f;
+    private float     _flipCooldownRemaining = 0f;
+
+    // Flip particles
+    private ParticleSystem _flipPs;
+
+    // Camera stays in pre-maneuver framing until burst starts.
+    public bool HoldCameraUntilBurst =>
+        _flipState == FlipState.VerticalInversion || _flipState == FlipState.HorizontalTurn;
+
     // ──────────────────────────────────────────────────────────────────────────
 
     void Awake()
@@ -98,6 +156,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         {
             dashPs = dashParticles.GetComponentInChildren<ParticleSystem>();
             dashParticles.SetActive(false);
+        }
+
+        if (flipParticles != null)
+        {
+            _flipPs = flipParticles.GetComponentInChildren<ParticleSystem>();
+            flipParticles.SetActive(false);
         }
 
         InitPostProcessing();
@@ -132,7 +196,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void Update()
     {
-        pendingMouseDelta += Mouse.current.delta.ReadValue();
+        Vector2 rawDelta = Mouse.current.delta.ReadValue();
+
+        // Gesture detector reads raw per-frame delta before it gets batched.
+        UpdateGestureDetection(rawDelta, Time.deltaTime);
+
+        pendingMouseDelta += rawDelta;
 
         if (dashParticles != null)
         {
@@ -151,6 +220,138 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         UpdatePostProcessing();
     }
 
+    // ── circle gesture detection ───────────────────────────────────────────────
+
+    void UpdateGestureDetection(Vector2 rawDelta, float dt)
+    {
+        // Tick cooldown.
+        if (_flipCooldownRemaining > 0f)
+        {
+            _flipCooldownRemaining -= dt;
+            if (_flipCooldownRemaining < 0f) _flipCooldownRemaining = 0f;
+        }
+
+        // No gesture tracking while a flip or burst is active, or during cooldown.
+        if (_flipState != FlipState.None || _flipCooldownRemaining > 0f)
+        {
+            ResetGesture();
+            return;
+        }
+
+        if (_gestureTracking)
+        {
+            _gestureElapsed += dt;
+            if (_gestureElapsed > circleWindowSeconds)
+            {
+                ResetGesture();
+                return;
+            }
+        }
+
+        float speed = rawDelta.magnitude / Mathf.Max(dt, 0.0001f);
+
+        if (speed < circleMinMouseSpeed)
+            return;
+
+        float currentAngle = Mathf.Atan2(rawDelta.y, rawDelta.x) * Mathf.Rad2Deg;
+
+        // Seed the tracking on the first fast-enough frame.
+        if (!_gestureTracking)
+        {
+            _gestureTracking          = true;
+            _gesturePrevAngle         = currentAngle;
+            _gestureAccumulatedAngle  = 0f;
+            _gestureElapsed           = 0f;
+            _gestureDirection         = 0;
+            _gesturePathLength        = 0f;
+            _gestureTracePos          = Vector2.zero;
+            _gestureTraceMin          = Vector2.zero;
+            _gestureTraceMax          = Vector2.zero;
+            return;
+        }
+
+        _gesturePathLength += rawDelta.magnitude;
+        _gestureTracePos   += rawDelta;
+        _gestureTraceMin    = Vector2.Min(_gestureTraceMin, _gestureTracePos);
+        _gestureTraceMax    = Vector2.Max(_gestureTraceMax, _gestureTracePos);
+
+        float delta = Mathf.DeltaAngle(_gesturePrevAngle, currentAngle);
+
+        // Establish rotation direction on first substantial frame.
+        if (_gestureDirection == 0)
+        {
+            if (Mathf.Abs(delta) > 5f)
+                _gestureDirection = delta > 0f ? 1 : -1;
+            _gesturePrevAngle  = currentAngle;
+            return;
+        }
+
+        float signedDelta = _gestureDirection * delta;
+
+        // Intentional gesture: significant reversals invalidate and restart.
+        if (signedDelta < -circleReverseAllowed)
+        {
+            ResetGesture();
+            return;
+        }
+
+        if (signedDelta > 0f)
+            _gestureAccumulatedAngle += Mathf.Abs(signedDelta);
+
+        _gesturePrevAngle  = currentAngle;
+
+        // Trigger!
+        if (_gestureAccumulatedAngle >= circleAngleThreshold && GestureShapeLooksIntentional())
+            TriggerFlip();
+    }
+
+    bool GestureShapeLooksIntentional()
+    {
+        Vector2 span = _gestureTraceMax - _gestureTraceMin;
+        return span.x >= circleMinDiameter &&
+               span.y >= circleMinDiameter &&
+               _gesturePathLength >= circleMinPathLength;
+    }
+
+    void ResetGesture()
+    {
+        _gestureTracking         = false;
+        _gestureDirection        = 0;
+        _gestureAccumulatedAngle = 0f;
+        _gestureElapsed          = 0f;
+        _gesturePrevAngle        = 0f;
+        _gesturePathLength       = 0f;
+        _gestureTracePos         = Vector2.zero;
+        _gestureTraceMin         = Vector2.zero;
+        _gestureTraceMax         = Vector2.zero;
+    }
+
+    void TriggerFlip()
+    {
+        _flipState      = FlipState.VerticalInversion;
+        _flipTimer      = 0f;
+        _flipStartYaw   = currentYaw;
+        _flipStartPitch = currentPitch;
+        _flipStartBank  = currentBank;
+        _flipEntrySpeed = Mathf.Max(currentSpeed, 1f);
+
+        // Zero out angular velocity so SmoothDamp doesn't fight the flip.
+        yawRate      = 0f;
+        yawRateVel   = 0f;
+        pitchRate    = 0f;
+        pitchRateVel = 0f;
+
+        ResetGesture();
+
+        if (flipParticles != null)
+        {
+            flipParticles.SetActive(true);
+            if (_flipPs != null) _flipPs.Play(withChildren: true);
+        }
+    }
+
+    // ── physics ────────────────────────────────────────────────────────────────
+
     void FixedUpdate()
     {
         Vector2 mouseDelta    = pendingMouseDelta;
@@ -164,30 +365,49 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed,
                                   1f - Mathf.Exp(-ramp * Time.fixedDeltaTime));
 
+        // ── flip state machine (may override currentSpeed) ─────────────────────
+        UpdateFlipStateMachine();
+
         // ── turn scaling driven by currentSpeed ────────────────────────────────
         float speedT   = Mathf.Clamp01(currentSpeed / referenceSpeed);
         float turnMult = Mathf.Lerp(1f, minTurnMultiplier, speedT);
 
-        // ── smooth angular rates ───────────────────────────────────────────────
-        float desiredYaw   =  mouseDelta.x * yawSensitivity   * turnMult;
-        float desiredPitch = -mouseDelta.y * pitchSensitivity * turnMult;
+        // ── smooth angular rates (suppressed during maneuver/burst) ────────────
+        Vector2 steeringInput = (_flipState == FlipState.None) ? mouseDelta : Vector2.zero;
+
+        float desiredYaw   =  steeringInput.x * yawSensitivity   * turnMult;
+        float desiredPitch = -steeringInput.y * pitchSensitivity * turnMult;
 
         yawRate   = Mathf.SmoothDamp(yawRate,   desiredYaw,   ref yawRateVel,   steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
         pitchRate = Mathf.SmoothDamp(pitchRate, desiredPitch, ref pitchRateVel, steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
 
-        // ── accumulate orientation ─────────────────────────────────────────────
-        currentYaw   += yawRate;
-        currentPitch += pitchRate;
-        currentPitch  = Mathf.Clamp(currentPitch, -maxPitchAngle, maxPitchAngle);
+        // ── accumulate orientation (overridden during the flip maneuver) ───────
+        bool maneuvering = _flipState == FlipState.VerticalInversion || _flipState == FlipState.HorizontalTurn;
+        if (!maneuvering)
+        {
+            currentYaw   += yawRate;
+            currentPitch += pitchRate;
+            currentPitch  = Mathf.Clamp(currentPitch, -maxPitchAngle, maxPitchAngle);
+        }
+        else
+        {
+            // Keep angular rates clean so inertia doesn't kick on maneuver exit.
+            yawRate    = 0f;
+            yawRateVel = 0f;
+            pitchRate  = 0f;
+            pitchRateVel = 0f;
+        }
 
-        float targetBank = enableBanking ? -yawRate * bankStrength : 0f;
-        currentBank = Mathf.Lerp(currentBank, targetBank,
-                                 1f - Mathf.Exp(-bankSmoothing * Time.fixedDeltaTime));
+        if (!maneuvering)
+        {
+            float targetBank = enableBanking ? -yawRate * bankStrength : 0f;
+            currentBank = Mathf.Lerp(currentBank, targetBank,
+                                     1f - Mathf.Exp(-bankSmoothing * Time.fixedDeltaTime));
+        }
 
         Quaternion newRotation = Quaternion.Euler(currentPitch, currentYaw, currentBank);
 
         // ── gravity speed bonus ────────────────────────────────────────────────
-        // downDot is 1 when flying straight down, 0 when level or climbing.
         float downDot        = Mathf.Clamp01(Vector3.Dot(newRotation * Vector3.forward, Vector3.down));
         float effectiveSpeed = currentSpeed + downDot * gravitySpeedBonus;
 
@@ -198,10 +418,99 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         rb.MoveRotation(newRotation);
     }
 
+    void UpdateFlipStateMachine()
+    {
+        float slowTargetSpeed = Mathf.Max(1f, _flipEntrySpeed * Mathf.Clamp01(flipSlowMultiplier));
+
+        switch (_flipState)
+        {
+            case FlipState.None:
+                return;
+
+            case FlipState.VerticalInversion:
+                _flipTimer += Time.fixedDeltaTime;
+                {
+                    float phaseDuration = Mathf.Max(0.01f, flipVerticalDuration);
+                    float t = Mathf.Clamp01(_flipTimer / phaseDuration);
+                    float eased = Mathf.SmoothStep(0f, 1f, t);
+                    float yawLeadT = Mathf.Clamp01((eased - 0.5f) / 0.5f);
+
+                    // Phase 1: rotate in the vertical plane to upside-down.
+                    // Begin yaw halfway through this phase.
+                    currentPitch = _flipStartPitch + eased * 180f;
+                    currentYaw   = _flipStartYaw + yawLeadT * 90f;
+                    currentBank  = _flipStartBank;
+
+                    // Slow continuously during the maneuver.
+                    currentSpeed = Mathf.Lerp(_flipEntrySpeed, slowTargetSpeed, eased * 0.5f);
+
+                    if (_flipTimer >= phaseDuration)
+                    {
+                        _flipState = FlipState.HorizontalTurn;
+                        _flipTimer = 0f;
+                    }
+                }
+                break;
+
+            case FlipState.HorizontalTurn:
+                _flipTimer += Time.fixedDeltaTime;
+                {
+                    float phaseDuration = Mathf.Max(0.01f, flipHorizontalDuration);
+                    float t = Mathf.Clamp01(_flipTimer / phaseDuration);
+                    float eased = Mathf.SmoothStep(0f, 1f, t);
+
+                    // Phase 2: yaw around to opposite heading while righting the body.
+                    currentYaw   = _flipStartYaw + 90f + eased * 90f;
+                    currentPitch = _flipStartPitch + (1f - eased) * 180f;
+                    currentBank  = _flipStartBank;
+
+                    currentSpeed = Mathf.Lerp(_flipEntrySpeed, slowTargetSpeed, 0.5f + eased * 0.5f);
+
+                    if (_flipTimer >= phaseDuration)
+                    {
+                        // Snap to exact final orientation.
+                        currentYaw   = _flipStartYaw + 180f;
+                        currentPitch = _flipStartPitch;
+                        currentBank  = _flipStartBank;
+
+                        _flipTimer = 0f;
+                        _flipState = FlipState.Bursting;
+
+                        // Burst only after the full maneuver completes.
+                        currentSpeed = burstSpeed;
+                    }
+                }
+                break;
+
+            case FlipState.Bursting:
+                _flipTimer += Time.fixedDeltaTime;
+
+                // Hold burst speed, overriding the dash ramp that ran above.
+                currentSpeed = burstSpeed;
+
+                if (_flipTimer >= burstDurationSeconds)
+                {
+                    _flipState             = FlipState.None;
+                    _flipTimer             = 0f;
+                    _flipCooldownRemaining = flipCooldownSeconds;
+
+                    // Do NOT reset currentSpeed — let the dash ramp decay it naturally.
+
+                    if (_flipPs != null)
+                        _flipPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    if (flipParticles != null)
+                        flipParticles.SetActive(false);
+                }
+                break;
+        }
+    }
+
     void UpdatePostProcessing()
     {
         // dashT: 0 = cruising at flightSpeed, 1 = fully dashing at dashSpeed.
         // Uses currentSpeed so it follows the same ramp as movement — no separate timer.
+        // During a burst (currentSpeed > dashSpeed), InverseLerp > 1 but Lerp clamps,
+        // so the effect simply stays at full dash intensity. No extra code needed.
         float dashT = Mathf.InverseLerp(flightSpeed, dashSpeed, currentSpeed);
         float t     = 1f - Mathf.Exp(-ppBlendSpeed * Time.deltaTime);
 

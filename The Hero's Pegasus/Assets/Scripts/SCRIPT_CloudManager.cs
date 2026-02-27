@@ -61,6 +61,11 @@ public class SCRIPT_CloudManager : MonoBehaviour
     [Tooltip("Exponential drag coefficient — higher = particles slow down faster (try 2–6)")]
     public float particleDrag     = 3f;
 
+    [Header("Performance")]
+    [Tooltip("Seconds between GetParticles/SetParticles passes (displacement + laser destruction). " +
+             "0 = every frame. 0.05 = 20 Hz — cuts GPU buffer uploads to 1/3 with no visible difference.")]
+    public float particleUpdateInterval = 0.05f;
+
     [Header("Optional")]
     [Tooltip("Cloud-texture particle material. Leave empty to use Unity's default soft-circle particle.")]
     public Material cloudMaterial;
@@ -76,6 +81,7 @@ public class SCRIPT_CloudManager : MonoBehaviour
     private SCRIPT_LaserController laser;
     private bool                    laserIsWorldSpace;
     private Camera                  mainCam;
+    private float                   _particleUpdateTimer;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -111,24 +117,11 @@ public class SCRIPT_CloudManager : MonoBehaviour
         Vector3 playerPos = player.position;
         Vector3 playerFwd = player.forward;
 
-        // Read all laser particles once for the whole frame
-        int laserCount = 0;
-        if (laser != null && laser.IsLaserActive && laser.LaserPS != null)
-            laserCount = laser.LaserPS.GetParticles(laserBuffer);
-
+        // ── Wind + recycle: cheap transforms, run every frame ─────────────────
         for (int i = 0; i < cloudTransforms.Length; i++)
         {
-            // ── Wind ──────────────────────────────────────────────────────────
             cloudTransforms[i].position += windVelocity * Time.deltaTime;
 
-            // ── Laser destruction ─────────────────────────────────────────────
-            if (laserCount > 0)
-                HandleLaserDestruction(i, laserCount);
-
-            // ── Player displacement + drag ────────────────────────────────────
-            HandlePlayerDisplacement(i, playerPos);
-
-            // ── Recycle ───────────────────────────────────────────────────────
             Vector3 toCloud   = cloudTransforms[i].position - playerPos;
             bool tooFarBehind = Vector3.Dot(toCloud, -playerFwd) > recycleDistance;
             bool outsideField = toCloud.magnitude > spawnRadius * 1.2f;
@@ -136,6 +129,26 @@ public class SCRIPT_CloudManager : MonoBehaviour
 
             if (tooFarBehind || outsideField || emptied)
                 Reposition(i, playerPos, playerFwd);
+        }
+
+        // ── GetParticles / SetParticles: throttled ────────────────────────────
+        // These calls marshal managed <-> native memory and upload GPU buffers.
+        // Running them at 20 Hz instead of 60 Hz cuts the upload cost by ~2/3
+        // with no perceptible visual difference.
+        _particleUpdateTimer += Time.deltaTime;
+        if (_particleUpdateTimer < particleUpdateInterval) return;
+        _particleUpdateTimer = 0f;
+
+        int laserCount = 0;
+        if (laser != null && laser.IsLaserActive && laser.LaserPS != null)
+            laserCount = laser.LaserPS.GetParticles(laserBuffer);
+
+        for (int i = 0; i < cloudTransforms.Length; i++)
+        {
+            if (laserCount > 0)
+                HandleLaserDestruction(i, laserCount);
+
+            HandlePlayerDisplacement(i, playerPos);
         }
     }
 
