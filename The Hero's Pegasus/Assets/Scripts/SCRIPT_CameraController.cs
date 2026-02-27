@@ -29,6 +29,9 @@ public class SCRIPT_CameraController : MonoBehaviour
     private bool    isFirstPerson;
     private Vector3 positionVelocity = Vector3.zero;    // SmoothDamp internal velocity
     private Vector3 smoothLookDir;                       // Smoothed world-space look direction
+    private SCRIPT_PlayerMovementController playerMovement;
+    private bool    holdCameraActive;
+    private Vector3 heldForward;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -44,6 +47,22 @@ public class SCRIPT_CameraController : MonoBehaviour
     void LateUpdate()
     {
         if (target == null) return;
+
+        if (playerMovement == null)
+            playerMovement = target.GetComponentInParent<SCRIPT_PlayerMovementController>();
+
+        bool shouldHoldCamera = playerMovement != null && playerMovement.HoldCameraUntilBurst;
+        if (shouldHoldCamera && !holdCameraActive)
+        {
+            holdCameraActive = true;
+            heldForward = target.forward;
+            if (heldForward.sqrMagnitude < 0.0001f) heldForward = transform.forward;
+            heldForward.Normalize();
+        }
+        else if (!shouldHoldCamera)
+        {
+            holdCameraActive = false;
+        }
 
         HandleScroll();
 
@@ -71,7 +90,8 @@ public class SCRIPT_CameraController : MonoBehaviour
                       + target.up    * heightOffset
                       + target.right * lateralOffset;
 
-        Vector3 desiredPosition = pivot - target.forward * distance;
+        Vector3 followForward = holdCameraActive ? heldForward : target.forward;
+        Vector3 desiredPosition = pivot - followForward * distance;
 
         // SmoothDamp is a spring-damper: framerate-independent, no overshoot,
         // absorbs sudden direction changes gracefully.

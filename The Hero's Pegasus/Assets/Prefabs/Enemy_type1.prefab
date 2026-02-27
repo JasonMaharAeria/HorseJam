@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4ceeb1a39e505e4cad4eb8964fa1cf6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_EnemyType1
-  health: 20
+  health: 8
   damageOnCollision: 25
   hitParticlePrefab: {fileID: 8973355800773920064, guid: 131dc7913a49c3445947524700cd0481, type: 3}
   deathParticlePrefab: {fileID: 648852946644775224, guid: 075b0edf74f000d479efdbfb5808aaf0, type: 3}
@@ -161,11 +161,26 @@ MonoBehaviour:
   deathSFX: {fileID: 0}
   hitSFXInterval: 0.01
   playerTarget: {fileID: 0}
-  flightSpeed: 68
-  trackingGain: 2
-  maxTurnRate: 40
+  flightSpeed: 80
+  trackingGain: 8
+  maxTurnRate: 70
   steeringSmoothTime: 0.2
   maxPitchAngle: 80
   enableBanking: 1
   bankStrength: 30
   bankSmoothing: 5
+  speedVariance: 3
+  trackingGainVariance: {x: 0.8, y: 1.2}
+  pursueInterruptInterval: {x: 3, y: 7}
+  strafeDuration: {x: 1.5, y: 3}
+  strafeStrength: 1
+  pitchDuration: {x: 1, y: 2.5}
+  pitchStrength: 0.8
+  escapeTriggerDot: -0.3
+  fleeDuration: {x: 1, y: 2.5}
+  evadeDuration: {x: 1.5, y: 3}
+  escapeCooldown: 5
+  _state: 0
+  _stateTimeRemaining: 0
+  _pursueTimer: 0
+  _escapeCooldown: 0

@@ -968,6 +968,72 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1382979934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1382979936}
+  - component: {fileID: 1382979935}
+  m_Layer: 0
+  m_Name: CONTROLLER_Clouds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1382979935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382979934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cec1b160c023b448babbf914feac381, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_CloudManager
+  player: {fileID: 1619109419}
+  cloudCount: 60
+  spawnRadius: 300
+  verticalRange: 80
+  minSpawnDist: 40
+  recycleDistance: 200
+  sceneCamera: {fileID: 0}
+  recycleMinDist: 120
+  fovSpawnMargin: 0.15
+  windVelocity: {x: 5, y: 0, z: 1.23}
+  particlesPerCloud: 18
+  minPuffSize: 39.9
+  maxPuffSize: 113.4
+  cloudSpread: 6
+  cloudAlpha: 0.207
+  cloudTint: {r: 1, g: 1, b: 1, a: 1}
+  laserDestroyRadius: 50.22
+  playerPushRadius: 40.4
+  playerPushForce: 119.5
+  particleDrag: 1.57
+  particleUpdateInterval: 0.05
+  cloudMaterial: {fileID: 10308, guid: 0000000000000000f000000000000000, type: 0}
+--- !u!4 &1382979936
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382979934}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -101.49949, y: -0, z: 1.15729}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1619109419 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4048734163778523560, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
@@ -1127,18 +1193,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5998958749776091048, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: lengthInSec
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5998958749776091048, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: InitialModule.startSpeed.scalar
-      value: 110
-      objectReference: {fileID: 0}
-    - target: {fileID: 5998958749776091048, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: InitialModule.startLifetime.scalar
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
       propertyPath: globalVolume
       value: 
@@ -1161,3 +1215,4 @@ SceneRoots:
   - {fileID: 1650541993}
   - {fileID: 183161315}
   - {fileID: 773867849}
+  - {fileID: 1382979936}
