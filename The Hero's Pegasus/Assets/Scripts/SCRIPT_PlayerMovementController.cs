@@ -62,6 +62,23 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     [Tooltip("Minimum total traced distance (px) required before a circle can trigger")]
     public float circleMinPathLength  = 420f;
 
+    [Header("Health")]
+    public float maxHealth = 100f;
+    [SerializeField] private float _currentHealth;
+
+    /// <summary>Current health, read-only from outside.</summary>
+    public float CurrentHealth => _currentHealth;
+    public bool  IsAlive       => _currentHealth > 0f;
+
+    [Header("Dash Attack")]
+    [Tooltip("Enemies within this radius are instantly destroyed while dashing or bursting. " +
+             "Tune to roughly match the pegasus's visual size.")]
+    public float dashKillRadius = 3f;
+
+    /// <summary>True while RMB dash is held or the post-flip burst is active.
+    /// Used for damage immunity and dash-kill detection.</summary>
+    public bool IsDashing { get; private set; }
+
     [Header("Circle Flip — Maneuver")]
     [Tooltip("Seconds for phase 1: vertical inversion to upside-down")]
     public float flipVerticalDuration   = 0.20f;
@@ -136,6 +153,9 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     // Flip particles
     private ParticleSystem _flipPs;
 
+    // Reusable buffer for dash-kill overlap checks — avoids per-frame heap allocation.
+    private readonly Collider[] _dashKillBuffer = new Collider[32];
+
     // Camera stays in pre-maneuver framing until burst starts.
     public bool HoldCameraUntilBurst =>
         _flipState == FlipState.VerticalInversion || _flipState == FlipState.HorizontalTurn;
@@ -153,7 +173,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         currentPitch = transform.eulerAngles.x;
         if (currentPitch > 180f) currentPitch -= 360f;
 
-        currentSpeed = flightSpeed;
+        currentSpeed    = flightSpeed;
+        _currentHealth  = maxHealth;
     }
 
     void Start()
@@ -385,6 +406,9 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         // ── flip state machine (may override currentSpeed) ─────────────────────
         UpdateFlipStateMachine();
 
+        // ── dash state (set after flip machine so Bursting is already current) ─
+        IsDashing = dashing || _flipState == FlipState.Bursting;
+
         // ── turn scaling driven by currentSpeed ────────────────────────────────
         float speedT   = Mathf.Clamp01(currentSpeed / referenceSpeed);
         float turnMult = Mathf.Lerp(1f, minTurnMultiplier, speedT);
@@ -433,6 +457,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         rb.MovePosition(newPosition);
         rb.MoveRotation(newRotation);
+
+        // ── dash kill ──────────────────────────────────────────────────────────
+        if (IsDashing)
+            CheckDashKill();
     }
 
     void UpdateFlipStateMachine()
@@ -520,6 +548,39 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    // ── health ─────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Global entry point for anything that wants to hurt the player.
+    /// Enemies, hazards, etc. — call this and nothing else.
+    /// </summary>
+    public void TakeDamage(float amount)
+    {
+        if (!IsAlive || IsDashing) return;
+
+        _currentHealth = Mathf.Max(0f, _currentHealth - amount);
+
+        if (_currentHealth <= 0f)
+            OnDeath();
+    }
+
+    void CheckDashKill()
+    {
+        int count = Physics.OverlapSphereNonAlloc(rb.position, dashKillRadius, _dashKillBuffer);
+        for (int i = 0; i < count; i++)
+        {
+            SCRIPT_EnemyBase enemy = _dashKillBuffer[i].GetComponentInParent<SCRIPT_EnemyBase>();
+            if (enemy != null)
+                enemy.TakeDamage(float.PositiveInfinity, rb.position);
+        }
+    }
+
+    protected virtual void OnDeath()
+    {
+        // Hook for game-over logic — replace or extend as the project grows.
+        Debug.Log("[Player] Died!");
     }
 
     void UpdatePostProcessing()

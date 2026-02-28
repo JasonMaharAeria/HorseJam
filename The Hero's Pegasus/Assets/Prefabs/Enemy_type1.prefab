@@ -161,13 +161,13 @@ MonoBehaviour:
   deathSFX: {fileID: 0}
   hitSFXInterval: 0.01
   playerTarget: {fileID: 0}
-  flightSpeed: 80
-  trackingGain: 8
+  flightSpeed: 100
+  trackingGain: 6
   maxTurnRate: 70
   steeringSmoothTime: 0.2
   maxPitchAngle: 80
   enableBanking: 1
-  bankStrength: 30
+  bankStrength: 40
   bankSmoothing: 5
   speedVariance: 3
   trackingGainVariance: {x: 0.8, y: 1.2}
@@ -184,3 +184,12 @@ MonoBehaviour:
   _stateTimeRemaining: 0
   _pursueTimer: 0
   _escapeCooldown: 0
+  dashStrikeRadius: 40
+  dashStrikeDuration: 3
+  dashStrikeCooldown: 4
+  dashStrikeSpeedMult: 2
+  dashStrikeTrackingMult: 2
+  dashStrikeMaxTurnMult: 1.5
+  dashStrikeSmoothTimeMult: 0.4
+  hitRadius: 2
+  hitCooldown: 1

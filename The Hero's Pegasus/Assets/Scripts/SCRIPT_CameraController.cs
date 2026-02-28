@@ -25,8 +25,14 @@ public class SCRIPT_CameraController : MonoBehaviour
     [Header("First-Person")]
     public Vector3 firstPersonLocalOffset = new Vector3(0f, 1.7f, 0.3f);
 
+    [Header("First-Person — Mesh Hiding")]
+    [Tooltip("Renderers disabled in first-person so the pegasus body doesn't block the view. " +
+             "Leave empty to auto-find all Renderers on the target's root object.")]
+    public Renderer[] meshesToHide;
+
     // ── private state ──────────────────────────────────────────────────────────
     private bool    isFirstPerson;
+    private bool    _wasFirstPerson = false;
     private Vector3 positionVelocity = Vector3.zero;    // SmoothDamp internal velocity
     private Vector3 smoothLookDir;                       // Smoothed world-space look direction
     private SCRIPT_PlayerMovementController playerMovement;
@@ -68,6 +74,13 @@ public class SCRIPT_CameraController : MonoBehaviour
 
         isFirstPerson = (distance <= minDistance);
 
+        // Toggle pegasus renderers only on state change, not every frame.
+        if (isFirstPerson != _wasFirstPerson)
+        {
+            SetMeshVisibility(!isFirstPerson);
+            _wasFirstPerson = isFirstPerson;
+        }
+
         if (isFirstPerson)
             ApplyFirstPerson();
         else
@@ -75,6 +88,16 @@ public class SCRIPT_CameraController : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────────────────────────────────
+
+    void SetMeshVisibility(bool visible)
+    {
+        // Auto-populate from target's root if the array is empty.
+        if ((meshesToHide == null || meshesToHide.Length == 0) && target != null)
+            meshesToHide = target.root.GetComponentsInChildren<Renderer>();
+
+        foreach (Renderer r in meshesToHide)
+            if (r != null) r.enabled = visible;
+    }
 
     void HandleScroll()
     {
