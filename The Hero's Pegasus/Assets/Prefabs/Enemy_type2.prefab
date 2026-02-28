@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 416354991931908152}
   - component: {fileID: 5005970383737434366}
   - component: {fileID: 3653989396367420337}
-  - component: {fileID: 919289976240141434}
+  - component: {fileID: -2336298310699908531}
   m_Layer: 0
-  m_Name: Enemy_type1
+  m_Name: Enemy_type2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33,7 +33,8 @@ Transform:
   m_LocalPosition: {x: -188.57013, y: 26.73637, z: -15.81}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 9001566037549998486}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &5371016635677341516
@@ -69,7 +70,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: d800dedc57514ab46880e18a07d5067b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -141,7 +142,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &919289976240141434
+--- !u!114 &-2336298310699908531
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -150,24 +151,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 6273412158784562365}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4ceeb1a39e505e4cad4eb8964fa1cf6, type: 3}
+  m_Script: {fileID: 11500000, guid: 2655e5da4b79a4f44a7876e6f9cf5d28, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_EnemyType1
-  health: 8
+  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_EnemyType2
+  health: 10
   damageOnCollision: 25
   hitParticlePrefab: {fileID: 8973355800773920064, guid: 131dc7913a49c3445947524700cd0481, type: 3}
   deathParticlePrefab: {fileID: 648852946644775224, guid: 075b0edf74f000d479efdbfb5808aaf0, type: 3}
   hitSFX: {fileID: 8300000, guid: 3509112fac438994fa658749f5152220, type: 3}
   deathSFX: {fileID: 0}
-  hitSFXInterval: 0.01
+  hitSFXInterval: 0.1
   playerTarget: {fileID: 0}
-  flightSpeed: 100
-  trackingGain: 6
-  maxTurnRate: 70
+  flightSpeed: 70
+  trackingGain: 3
+  maxTurnRate: 45
   steeringSmoothTime: 0.2
   maxPitchAngle: 80
   enableBanking: 1
-  bankStrength: 40
+  bankStrength: 25
   bankSmoothing: 5
   speedVariance: 3
   trackingGainVariance: {x: 0.8, y: 1.2}
@@ -184,12 +185,43 @@ MonoBehaviour:
   _stateTimeRemaining: 0
   _pursueTimer: 0
   _escapeCooldown: 0
-  dashStrikeRadius: 40
-  dashStrikeDuration: 3
-  dashStrikeCooldown: 4
-  dashStrikeSpeedMult: 2
-  dashStrikeTrackingMult: 2
-  dashStrikeMaxTurnMult: 1.5
-  dashStrikeSmoothTimeMult: 0.4
-  hitRadius: 2
-  hitCooldown: 1
+  preferredDist: 50
+  orbitStrength: 0.6
+  projectilePrefab: {fileID: 5700400001760814419, guid: 59ad7804f71ef684d93c0cab854a2ce0, type: 3}
+  firePoint: {fileID: 9001566037549998486}
+  projectileSpeed: 100
+  projectileDamage: 15
+  fireRate: 1
+  aimOffsetDegrees: 4
+  usePredictiveAim: 1
+--- !u!1 &8300828714452726296
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9001566037549998486}
+  m_Layer: 0
+  m_Name: POINT_Fire
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9001566037549998486
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8300828714452726296}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.602, z: 0}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2765193113217853303}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

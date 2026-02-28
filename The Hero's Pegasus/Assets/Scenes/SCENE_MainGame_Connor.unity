@@ -433,6 +433,7 @@ MonoBehaviour:
   positionSmoothTime: 0.15
   rotationSmoothing: 8
   firstPersonLocalOffset: {x: 0, y: 1.7, z: 0.3}
+  meshesToHide: []
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -589,11 +590,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74a5a8a8a219cb84da0d20b151ff6226, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_WaveController
-  enemyType1Prefab: {fileID: 6273412158784562365, guid: ffe531dfb6a42bf459deda3f2fd1ba95, type: 3}
-  enemyType2Prefab: {fileID: 6273412158784562365, guid: ffe531dfb6a42bf459deda3f2fd1ba95, type: 3}
+  enemyType1Prefab: {fileID: 6273412158784562365, guid: 3555dbc755921e4449efd66cb33b29ef, type: 3}
+  enemyType2Prefab: {fileID: 6273412158784562365, guid: 3555dbc755921e4449efd66cb33b29ef, type: 3}
   enemyType3Prefab: {fileID: 6273412158784562365, guid: ffe531dfb6a42bf459deda3f2fd1ba95, type: 3}
-  waveDuration: 120
-  repriveDuration: 10
+  waveDuration: 60
+  repriveDuration: 5
   spawnCenter: {fileID: 1619109419}
   spawnRadius: 150
   startSpawnInterval: 6
@@ -1152,6 +1153,18 @@ PrefabInstance:
     - target: {fileID: 98775198429567176, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
       propertyPath: m_Name
       value: FAB_Pegasus
+      objectReference: {fileID: 0}
+    - target: {fileID: 182754487371576670, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: fireRate
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 182754487371576670, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: arrowDamage
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 182754487371576670, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: aimOffsetDegrees
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4048734163778523560, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
       propertyPath: m_LocalPosition.x

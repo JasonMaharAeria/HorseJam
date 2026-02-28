@@ -14,14 +14,15 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
 {
     // ── enums ──────────────────────────────────────────────────────────────────
 
-    private enum FlightState
+    protected enum FlightState
     {
-        Pursuing,   // standard: use GetDesiredHeading()
-        Strafing,   // veer left or right while generally facing the player
-        Climbing,   // pitch up while generally facing the player
-        Diving,     // pitch down while generally facing the player
-        Fleeing,    // fly straight (no tracking) — escape wind-up
-        Evading     // sharp diagonal break — escape maneuver
+        Pursuing,     // standard: use GetDesiredHeading()
+        Strafing,     // veer left or right while generally facing the player
+        Climbing,     // pitch up while generally facing the player
+        Diving,       // pitch down while generally facing the player
+        Fleeing,      // fly straight (no tracking) — escape wind-up
+        Evading,      // sharp diagonal break — escape maneuver
+        DashStriking  // subclass strike mode: boosted speed/tracking, flies directly at player
     }
 
     // ── inspector ──────────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     // ── runtime state (visible in inspector for live debugging) ───────────────
 
     [Header("Runtime State (read-only)")]
-    [SerializeField] private FlightState _state             = FlightState.Pursuing;
+    [SerializeField] protected FlightState _state            = FlightState.Pursuing;
     [SerializeField] private float       _stateTimeRemaining = 0f;
     [SerializeField] private float       _pursueTimer        = 0f;
     [SerializeField] private float       _escapeCooldown     = 0f;
@@ -260,14 +261,32 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
                     EnterPursuing();
                 }
                 break;
+
+            case FlightState.DashStriking:
+                if (_stateTimeRemaining <= 0f)
+                    ExitDashStriking();
+                break;
         }
     }
 
-    void EnterPursuing()
+    protected void EnterPursuing()
     {
         _state       = FlightState.Pursuing;
         _pursueTimer = Random.Range(pursueInterruptInterval.x, pursueInterruptInterval.y);
     }
+
+    protected void EnterDashStriking(float duration)
+    {
+        _state              = FlightState.DashStriking;
+        _stateTimeRemaining = duration;
+    }
+
+    /// <summary>Called when the DashStriking timer expires. Override to restore boosted
+    /// stats before calling base, which returns the enemy to Pursuing.</summary>
+    protected virtual void ExitDashStriking() => EnterPursuing();
+
+    /// <summary>World-space heading used while DashStriking. Defaults to direct pursuit.</summary>
+    protected virtual Vector3 GetDashStrikeHeading() => GetDesiredHeading();
 
     void EnterRandomManeuver()
     {
@@ -350,6 +369,9 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
             case FlightState.Evading:
                 return _evadeDir;
 
+            case FlightState.DashStriking:
+                return GetDashStrikeHeading();
+
             default:
                 return GetDesiredHeading();
         }
@@ -379,8 +401,12 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
             Die();
     }
 
+    private bool _dead;
     private void Die()
     {
+        if (_dead) return;
+        _dead = true;
+
         if (deathParticlePrefab != null)
             Instantiate(deathParticlePrefab, transform.position, Quaternion.identity);
 
