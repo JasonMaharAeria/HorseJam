@@ -15,7 +15,7 @@ public class SCRIPT_StaminaBar : MonoBehaviour
     public Slider staminaSlider;
     public Image fillImage;
 
-    public Color normalColor = Color.green;
+    public Color normalColor = Color.yellow;
     public Color exhaustedColor = Color.red;
 
 
