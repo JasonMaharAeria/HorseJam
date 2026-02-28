@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Infinite wave spawner. Waves run forever — difficulty escalates automatically
@@ -44,6 +45,12 @@ public class SCRIPT_WaveController : MonoBehaviour
     [Tooltip("Hard upper cap on concurrent enemies.")]
     public int maxConcurrentCap = 30;
 
+    [Header("Audio")]
+    [Tooltip("Played (2D) when a new wave begins, including wave 1.")]
+    public AudioClip waveStartClip;
+    [Tooltip("Played (2D) when a wave ends and the reprieve begins.")]
+    public AudioClip waveCompleteClip;
+
     [Header("Enemy Type Weight Curves")]
     [Tooltip("Spawn weight of Type 1 over wave number. X axis = wave, Y axis = weight. " +
              "Only ratios matter — weights are normalised at runtime.")]
@@ -66,6 +73,7 @@ public class SCRIPT_WaveController : MonoBehaviour
 
     private float _spawnTimer;
     private readonly List<SCRIPT_EnemyBase> _activeEnemies = new List<SCRIPT_EnemyBase>();
+    private AudioSource _waveAudioSource;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -80,7 +88,16 @@ public class SCRIPT_WaveController : MonoBehaviour
                 Debug.LogWarning("[WaveController] No 'Player' tagged object found for spawn center.", this);
         }
 
+        // Set up a 2D AudioSource for wave stings, routed through the SFX mixer group.
+        AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                  ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+        _waveAudioSource                       = gameObject.AddComponent<AudioSource>();
+        _waveAudioSource.outputAudioMixerGroup = sfx;
+        _waveAudioSource.spatialBlend          = 0f;
+        _waveAudioSource.playOnAwake           = false;
+
         RefreshWaveParams();
+        PlayWaveSound(waveStartClip);
         Debug.Log($"[WaveController] Wave {_currentWave} started. " +
                   $"Interval={_spawnInterval:F1}s  MaxConcurrent={_maxConcurrent}");
     }
@@ -111,6 +128,7 @@ public class SCRIPT_WaveController : MonoBehaviour
     {
         _inReprieve = true;
         _phaseTimer = 0f;
+        PlayWaveSound(waveCompleteClip);
         Debug.Log($"[WaveController] Wave {_currentWave} complete — reprieve for {repriveDuration}s.");
     }
 
@@ -121,6 +139,7 @@ public class SCRIPT_WaveController : MonoBehaviour
         _phaseTimer  = 0f;
         _spawnTimer  = 0f;
         RefreshWaveParams();
+        PlayWaveSound(waveStartClip);
         Debug.Log($"[WaveController] Wave {_currentWave} started. " +
                   $"Interval={_spawnInterval:F1}s  MaxConcurrent={_maxConcurrent}");
     }
@@ -180,6 +199,12 @@ public class SCRIPT_WaveController : MonoBehaviour
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
+
+    void PlayWaveSound(AudioClip clip)
+    {
+        if (_waveAudioSource == null || clip == null) return;
+        _waveAudioSource.PlayOneShot(clip);
+    }
 
     /// <summary>Samples each type's weight at the current wave and picks a prefab via weighted random.</summary>
     GameObject PickPrefab()

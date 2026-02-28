@@ -70,5 +70,7 @@ public class SCRIPT_StaminaBar : MonoBehaviour
         return currentStamina == maxStamina;
     }
 
+    /// <summary>Stamina as a 0–1 fraction. Used by SCRIPT_PlayerAudio to modulate dash pitch.</summary>
+    public float StaminaFraction => currentStamina / maxStamina;
 
 }

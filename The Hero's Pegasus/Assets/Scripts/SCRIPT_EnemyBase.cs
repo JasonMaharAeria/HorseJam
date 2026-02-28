@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Abstract base for all enemy types. Handles kinematic flight physics that mirrors
@@ -392,8 +393,11 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
         if (hitSFX != null && Time.time >= _nextHitSFXTime)
         {
             // Play at the listener position so volume is unaffected by distance to impact.
+            // Routes through the SFX mixer group so the settings menu volume slider works.
             Vector3 listenerPos = Camera.main != null ? Camera.main.transform.position : hitPosition;
-            AudioSource.PlayClipAtPoint(hitSFX, listenerPos);
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(hitSFX, listenerPos, sfx);
             _nextHitSFXTime = Time.time + hitSFXInterval;
         }
 
@@ -411,7 +415,11 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
             Instantiate(deathParticlePrefab, transform.position, Quaternion.identity);
 
         if (deathSFX != null)
-            AudioSource.PlayClipAtPoint(deathSFX, transform.position);
+        {
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(deathSFX, transform.position, sfx);
+        }
 
         Destroy(gameObject);
     }

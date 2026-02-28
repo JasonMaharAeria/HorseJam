@@ -49,11 +49,13 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.7f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\SCRIPT_PlayerAudio.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LoopLaserTracker.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_StaminaBar.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyBase.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_WaveController.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_FogController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_EnemyAudio.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_Hero.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyType1.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_AOEHitRelay.cs" />
@@ -63,6 +65,7 @@
     <Compile Include="Assets\Scripts\SCRIPT_EnemyType2.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LaserSeeker.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_PlayerMovementController.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_AudioManager.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyProjectile.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_CloudManager.cs" />

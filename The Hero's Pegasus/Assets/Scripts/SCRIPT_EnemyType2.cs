@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Enemy Type 2 — Standoff Orbiter.
@@ -32,6 +33,10 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
              "Values around 0.5–0.7 produce a natural spiralling orbit.")]
     [Range(0f, 1f)]
     public float orbitStrength = 0.6f;
+
+    [Header("Type 2: Audio")]
+    [Tooltip("Played at the fire point each time a projectile is fired.")]
+    public AudioClip projectileFireClip;
 
     [Header("Type 2: Shooting")]
     [Tooltip("Projectile prefab to fire. Must have a SCRIPT_EnemyProjectile component.")]
@@ -136,6 +141,13 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
         Vector3 aimDir = Quaternion.LookRotation(baseDir)
                        * Quaternion.Euler(pitch, yaw, 0f)
                        * Vector3.forward;
+
+        if (projectileFireClip != null)
+        {
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(projectileFireClip, origin, sfx);
+        }
 
         GameObject proj        = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(aimDir));
         var        projScript  = proj.GetComponent<SCRIPT_EnemyProjectile>();
