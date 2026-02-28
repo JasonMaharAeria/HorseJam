@@ -108,14 +108,18 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float loopCooldownSeconds = 4f;
 
     [Header("Vertical Loop — Maneuver")]
-    [Tooltip("Radius of the loop circle in world units. Combined with entry speed, sets the loop duration " +
-             "via duration = 2π × radius / speed.")]
+    [Tooltip("Radius of the loop circle in world units.")]
     public float loopRadius = 15f;
-    [Tooltip("Max world-space radius to search for lock-on targets when the apex is reached.")]
+    [Tooltip("Seconds to complete a full 360-degree loop. Controls loop finish speed regardless of radius.")]
+    public float loopDurationSeconds = 2.5f;
+    [Tooltip("Starting speed multiplier for the loop. Lower values keep the early loop slower; end speed is auto-calculated so the full loop still completes exactly on time.")]
+    [Range(0.1f, 1f)]
+    public float loopFirstHalfSpeedMultiplier = 0.7f;
+    [Tooltip("Max world-space radius to search for lock-on targets when loop laser lock-on begins.")]
     public float loopFireRange = 80f;
     [Tooltip("Maximum number of enemies to lock on to simultaneously.")]
     public int   loopMaxTargets = 6;
-    [Tooltip("Laser particle prefab instantiated per locked target at the apex. Parented to the player " +
+    [Tooltip("Laser particle prefab instantiated per locked target when loop lock-on begins. Parented to the player " +
              "and continuously rotated to track its assigned enemy. Should have SCRIPT_LaserHitRelay.")]
     public GameObject loopLaserPrefab;
 
@@ -185,10 +189,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     private float   _loopStartPitch;
     private float   _loopStartYaw;
     private float   _loopStartBank;
-    private float   _loopStartSpeed;
-    private float   _loopDuration;       // 2π × radius / speed, computed at trigger
+    private float   _loopStartSpeed;     // base loop speed for multiplier = 1
+    private float   _loopDuration;       // full 360-degree loop duration (seconds), computed at trigger
     private float   _loopProgress;       // 0 → 1 over the full loop, exposed for camera
-    private bool    _loopFiredYet;       // true once lasers have been spawned at apex
+    private bool    _loopFiredYet;       // true once lasers have been spawned for this loop
 
     // Entry-frame orientation vectors exposed for the camera boom calculation.
     public bool    IsLooping        => _flipState == FlipState.Looping;
@@ -463,13 +467,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         _loopStartPitch = currentPitch;
         _loopStartYaw   = currentYaw;
         _loopStartBank  = currentBank;
-        _loopStartSpeed = Mathf.Max(currentSpeed, 1f);
+        _loopDuration   = Mathf.Max(0.01f, loopDurationSeconds);
+        _loopStartSpeed = 2f * Mathf.PI * Mathf.Max(0.01f, loopRadius) / _loopDuration;
         _loopFiredYet   = false;
         _loopProgress   = 0f;
-
-        // Duration of one full 360° loop for a circle of radius r at constant speed v:
-        //   circumference = 2π r,  duration = circumference / v
-        _loopDuration = 2f * Mathf.PI * loopRadius / _loopStartSpeed;
 
         // Capture entry orientation for the camera boom calculation.
         LoopEntryForward = transform.forward;
@@ -642,22 +643,42 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
             // ── vertical loop — single continuous 360° pitch sweep ─────────────
             //
-            //   Pitch rate = v / r  rad/s  (constant → true circle, settable radius)
-            //   Duration   = 2π × r / v
-            //   Apex (inverted) at progress = 0.5; lasers lock on then and track until done.
+            //   Duration is controlled directly by loopDurationSeconds.
+            //   Loop speed is derived at trigger time so larger radii move faster.
+            //   Speed transitions smoothly from slower early to faster late.
+            //   Lasers start at 90 degrees into the loop (progress = 0.25).
 
             case FlipState.Looping:
-                _flipTimer   += Time.fixedDeltaTime;
-                _loopProgress = Mathf.Clamp01(_flipTimer / _loopDuration);
+                _flipTimer += Time.fixedDeltaTime;
+                {
+                    // Time-normalized loop phase.
+                    float loopT = Mathf.Clamp01(_flipTimer / _loopDuration);
 
-                // Linear pitch sweep — constant angular rate produces a true circle.
+                    // Start below 1, end above 1, with average multiplier of exactly 1
+                    // so the loop still completes on the configured duration.
+                    float startMult = Mathf.Clamp(loopFirstHalfSpeedMultiplier, 0.1f, 1f);
+                    float endMult   = Mathf.Max(0.01f, 2f - startMult);
+
+                    // Smooth easing from start -> end without any sudden jump.
+                    float smoothT   = loopT * loopT * (3f - 2f * loopT); // smoothstep(0..1)
+                    float speedMult = Mathf.Lerp(startMult, endMult, smoothT);
+
+                    // Integral of speedMult over loop time gives exact angle progress.
+                    // For smoothstep: ∫(3t^2 - 2t^3)dt = t^3 - 0.5t^4
+                    _loopProgress = startMult * loopT
+                                  + (endMult - startMult) * (loopT * loopT * loopT - 0.5f * loopT * loopT * loopT * loopT);
+                    _loopProgress = Mathf.Clamp01(_loopProgress);
+
+                    // Matching speed profile preserves loop radius while progress advances.
+                    currentSpeed = _loopStartSpeed * speedMult;
+                }
+
                 currentPitch = _loopStartPitch - _loopProgress * 360f;
                 currentYaw   = _loopStartYaw;
                 currentBank  = 0f;
-                currentSpeed = _loopStartSpeed;   // constant speed preserves the radius
 
-                // Fire lasers once at the apex (halfway through).
-                if (!_loopFiredYet && _loopProgress >= 0.5f)
+                // Fire lasers once at 90 degrees into the loop (quarter progress).
+                if (!_loopFiredYet && _loopProgress >= 0.25f)
                 {
                     _loopFiredYet = true;
                     FireLoopLasers();

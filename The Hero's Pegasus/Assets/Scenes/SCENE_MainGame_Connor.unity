@@ -399,6 +399,9 @@ MonoBehaviour:
   rotationSmoothing: 8
   firstPersonLocalOffset: {x: 0, y: 1.7, z: 0.3}
   meshesToHide: []
+  loopZoomDistance: 35
+  loopBoomAngle: 80
+  loopPositionSmoothTime: 0.25
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1464,31 +1467,24 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4371598105866458119, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: CollisionModule.enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopRadius
+      value: 45
+      objectReference: {fileID: 0}
     - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
       propertyPath: globalVolume
       value: 
       objectReference: {fileID: 832575518}
     - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: loopFireRange
-      value: 200
+      propertyPath: loopDurationSeconds
+      value: 2
       objectReference: {fileID: 0}
-    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: loopFlickWindow
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: loopLaserPrefab
-      value: 
-      objectReference: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
-    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: loopCooldownSeconds
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
-      propertyPath: loopFlickMinDisplacement
-      value: 300
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 156152927478914983, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
