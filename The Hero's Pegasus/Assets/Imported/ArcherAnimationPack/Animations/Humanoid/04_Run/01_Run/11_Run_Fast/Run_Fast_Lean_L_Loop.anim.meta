@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 19327bbd9ba84a9489164394eba7c95e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/04_Run/01_Run/11_Run_Fast/Run_Fast_Lean_L_Loop.anim
+  uploadId: 729772

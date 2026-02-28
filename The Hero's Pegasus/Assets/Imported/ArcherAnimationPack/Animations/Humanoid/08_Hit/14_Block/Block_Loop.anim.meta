@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7946e0df20a374041829ddd3d824f4bf
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/14_Block/Block_Loop.anim
+  uploadId: 729772

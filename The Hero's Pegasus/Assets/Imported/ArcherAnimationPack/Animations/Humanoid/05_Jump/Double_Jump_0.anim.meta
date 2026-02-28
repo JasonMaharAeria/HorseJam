@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 92c93f2ccf71e38488c0c46db3bd9f83
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/05_Jump/Double_Jump_0.anim
+  uploadId: 729772

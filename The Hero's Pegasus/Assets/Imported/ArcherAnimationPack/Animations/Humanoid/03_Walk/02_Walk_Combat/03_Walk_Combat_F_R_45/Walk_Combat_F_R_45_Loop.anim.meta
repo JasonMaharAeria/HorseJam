@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 06d558b0555be2a45b07898f67d0f714
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/02_Walk_Combat/03_Walk_Combat_F_R_45/Walk_Combat_F_R_45_Loop.anim
+  uploadId: 729772

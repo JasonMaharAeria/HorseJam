@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: eba8ec7386811e64ba2fa308af487f0c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/02_Hit_Combat/Hit_Combat_Death.anim
+  uploadId: 729772

@@ -97,6 +97,20 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     [Range(0f, 2f)]
     public float   pitchStrength   = 0.8f;
 
+    [Header("Island Avoidance")]
+    [Tooltip("Physics layer(s) that island colliders live on. Must match the island prefab layer.")]
+    public LayerMask islandLayerMask;
+    [Tooltip("How far ahead (metres) the enemy looks for islands to avoid.")]
+    public float islandAvoidanceLookAhead = 30f;
+    [Tooltip("How strongly the enemy deviates from its pursuit heading to avoid an island. " +
+             "0 = ignored, 1 = full detour at point-blank range.")]
+    [Range(0f, 1f)]
+    public float islandAvoidanceStrength = 0.8f;
+    [Tooltip("Speed at or above which hitting an island deals damage to the enemy.")]
+    public float islandImpactDamageThreshold = 10f;
+    [Tooltip("Damage dealt per unit of speed above islandImpactDamageThreshold on impact.")]
+    public float islandImpactDamageMultiplier = 5f;
+
     [Header("Behavior — Escape")]
     [Tooltip("Dot product of forward vs. to-player below which an escape triggers. " +
              "Negative values mean 'player is behind': -0.3 ≈ 107°, -1 = directly behind.")]
@@ -346,35 +360,101 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
                          ? (playerTarget.position - transform.position).normalized
                          : transform.forward;
 
+        Vector3 rawHeading;
+
         switch (_state)
         {
             case FlightState.Pursuing:
-                return GetDesiredHeading();
+                rawHeading = GetDesiredHeading();
+                break;
 
             case FlightState.Strafing:
                 Vector3 strafeRight = Vector3.Cross(Vector3.up, toPlayer);
                 if (strafeRight.sqrMagnitude < 0.001f)
                     strafeRight = Vector3.Cross(Vector3.forward, toPlayer);
                 strafeRight.Normalize();
-                return (toPlayer + strafeRight * _strafeDir * strafeStrength).normalized;
+                rawHeading = (toPlayer + strafeRight * _strafeDir * strafeStrength).normalized;
+                break;
 
             case FlightState.Climbing:
-                return (toPlayer + Vector3.up   * pitchStrength).normalized;
+                rawHeading = (toPlayer + Vector3.up   * pitchStrength).normalized;
+                break;
 
             case FlightState.Diving:
-                return (toPlayer + Vector3.down * pitchStrength).normalized;
+                rawHeading = (toPlayer + Vector3.down * pitchStrength).normalized;
+                break;
 
             case FlightState.Fleeing:
-                return transform.forward;   // hold current heading, no tracking
+                rawHeading = transform.forward;   // hold current heading, no tracking
+                break;
 
             case FlightState.Evading:
-                return _evadeDir;
+                rawHeading = _evadeDir;
+                break;
 
             case FlightState.DashStriking:
-                return GetDashStrikeHeading();
+                rawHeading = GetDashStrikeHeading();
+                break;
 
             default:
-                return GetDesiredHeading();
+                rawHeading = GetDesiredHeading();
+                break;
+        }
+
+        return ApplyIslandAvoidance(rawHeading);
+    }
+
+    // Steers the enemy around islands while preserving general intent toward the player.
+    Vector3 ApplyIslandAvoidance(Vector3 desiredDir)
+    {
+        if (islandAvoidanceLookAhead <= 0f)
+            return desiredDir;
+
+        int castMask = islandLayerMask != 0
+            ? (int)islandLayerMask
+            : Physics.DefaultRaycastLayers;
+
+        if (!Physics.SphereCast(transform.position, 2f, transform.forward,
+                                out RaycastHit hit, islandAvoidanceLookAhead, castMask))
+            return desiredDir;
+
+        // Only steer around actual islands, not other colliders in the scene.
+        if (hit.collider.GetComponentInParent<SCRIPT_FloatingIsland>() == null)
+            return desiredDir;
+
+        // Build a tangent along the island surface that the enemy can slide around.
+        Vector3 tangent = Vector3.Cross(hit.normal, Vector3.up).normalized;
+        if (tangent.sqrMagnitude < 0.01f)
+            tangent = Vector3.Cross(hit.normal, Vector3.right).normalized;
+
+        // Prefer the tangent side that is closer to the player direction.
+        Vector3 toPlayer = playerTarget != null
+                         ? (playerTarget.position - transform.position).normalized
+                         : transform.forward;
+        if (Vector3.Dot(tangent, toPlayer) < 0f)
+            tangent = -tangent;
+
+        // Urgency ramps from 0 (far away) to 1 (point-blank), eased for smoothness.
+        float urgency = 1f - Mathf.Clamp01(hit.distance / islandAvoidanceLookAhead);
+        urgency = Mathf.SmoothStep(0f, 1f, urgency);
+
+        return Vector3.Lerp(desiredDir, tangent,
+                            urgency * islandAvoidanceStrength).normalized;
+    }
+
+    // ── island impact damage ───────────────────────────────────────────────────
+
+    void OnCollisionEnter(Collision col)
+    {
+        if (col.gameObject.GetComponentInParent<SCRIPT_FloatingIsland>() == null) return;
+
+        // Kinematic rigidbodies have no physics velocity; use the configured
+        // flight speed as the proxy for impact severity.
+        if (flightSpeed >= islandImpactDamageThreshold)
+        {
+            float damage = (flightSpeed - islandImpactDamageThreshold)
+                         * islandImpactDamageMultiplier;
+            TakeDamage(damage, transform.position);
         }
     }
 
@@ -420,6 +500,8 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
                                       ? SCRIPT_AudioManager.Instance.sfxGroup : null;
             SCRIPT_AudioManager.PlayClipAtPoint(deathSFX, transform.position, sfx);
         }
+
+        SCRIPT_GameStats.Instance?.ReportKill(this);
 
         Destroy(gameObject);
     }

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2ddd4ff91d9e880488f15327657b4a3f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/01_Walk/03_Walk_F_R_45/Walk_F_R_45_Loop.anim
+  uploadId: 729772

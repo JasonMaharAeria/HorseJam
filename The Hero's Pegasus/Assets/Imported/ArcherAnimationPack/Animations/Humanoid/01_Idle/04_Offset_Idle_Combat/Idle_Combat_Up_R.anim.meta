@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1124d21d925e83f4582a6dca83a74119
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/01_Idle/04_Offset_Idle_Combat/Idle_Combat_Up_R.anim
+  uploadId: 729772

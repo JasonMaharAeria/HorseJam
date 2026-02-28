@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ac70c7d5ef3d355448b7220690089b30
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/07_Skill_Attack/Skill_04_Charge_LV2_End.anim
+  uploadId: 729772

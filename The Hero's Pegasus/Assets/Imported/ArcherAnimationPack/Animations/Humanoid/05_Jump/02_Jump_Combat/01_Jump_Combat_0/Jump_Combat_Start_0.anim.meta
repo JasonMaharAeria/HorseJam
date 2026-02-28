@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7ac203f46c945b146920204b9059ddea
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/05_Jump/02_Jump_Combat/01_Jump_Combat_0/Jump_Combat_Start_0.anim
+  uploadId: 729772

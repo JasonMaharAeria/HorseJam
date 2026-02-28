@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1c2fed547e46caf46af752bb4712c66b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/05_Walk_Combat_to_Walk/Walk_Combat_to_Walk.anim
+  uploadId: 729772

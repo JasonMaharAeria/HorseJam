@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d1814c6d47f52fc48bb38496a7b6fe1b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/06_Dodge/05_Dodge_to_Run/Dodge_to_Run_L_90.anim
+  uploadId: 729772

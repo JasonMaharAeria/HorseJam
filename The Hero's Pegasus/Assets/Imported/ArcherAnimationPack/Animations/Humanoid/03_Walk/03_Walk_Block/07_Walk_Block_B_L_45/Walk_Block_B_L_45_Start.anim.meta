@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1ea6959ef21a04d47bb9bd02a7baff0c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/03_Walk_Block/07_Walk_Block_B_L_45/Walk_Block_B_L_45_Start.anim
+  uploadId: 729772

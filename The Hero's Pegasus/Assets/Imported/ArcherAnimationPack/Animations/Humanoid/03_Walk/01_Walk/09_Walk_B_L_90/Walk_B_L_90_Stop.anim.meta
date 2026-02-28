@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: be7ec9ce7f269394192a23bd882765ae
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/01_Walk/09_Walk_B_L_90/Walk_B_L_90_Stop.anim
+  uploadId: 729772

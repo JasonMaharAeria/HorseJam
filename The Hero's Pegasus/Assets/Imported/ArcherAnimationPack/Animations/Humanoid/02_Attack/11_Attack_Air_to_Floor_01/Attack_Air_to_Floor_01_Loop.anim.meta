@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c708849afead0e04a9bde8dd07d294ca
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/11_Attack_Air_to_Floor_01/Attack_Air_to_Floor_01_Loop.anim
+  uploadId: 729772

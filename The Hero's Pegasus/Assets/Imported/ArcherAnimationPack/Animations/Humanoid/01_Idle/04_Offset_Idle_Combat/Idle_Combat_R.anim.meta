@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a53fecee62e90d6469fecbc0329c6640
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/01_Idle/04_Offset_Idle_Combat/Idle_Combat_R.anim
+  uploadId: 729772

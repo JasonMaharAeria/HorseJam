@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9de0158a9ba49854d8d86dee2e7273e8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/02_Walk_Combat/05_Walk_Combat_F_R_90/Walk_Combat_F_R_90_Start.anim
+  uploadId: 729772

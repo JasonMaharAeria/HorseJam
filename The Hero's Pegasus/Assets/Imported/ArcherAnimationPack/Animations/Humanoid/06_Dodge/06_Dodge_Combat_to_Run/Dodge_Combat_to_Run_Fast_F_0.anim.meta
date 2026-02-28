@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8f16d2e6b904bdb4b9a16cf06521daca
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/06_Dodge/06_Dodge_Combat_to_Run/Dodge_Combat_to_Run_Fast_F_0.anim
+  uploadId: 729772

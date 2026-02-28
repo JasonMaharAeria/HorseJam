@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 559696870fb9cd64c92738a7f076e3bf
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/10_Ultimate_Attack/01_Ultimate_Attack/Ultimate_Attack_Loop.anim
+  uploadId: 729772

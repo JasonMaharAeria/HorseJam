@@ -66,6 +66,15 @@ public class SCRIPT_WaveController : MonoBehaviour
     [Header("Runtime State (read-only)")]
     [SerializeField] private int   _currentWave = 1;
     [SerializeField] private bool  _inReprieve  = false;
+
+    /// <summary>Current wave number. Read by SCRIPT_DeathScreen for the end-of-run stats.</summary>
+    public int CurrentWave => _currentWave;
+
+    /// <summary>Set to true by SCRIPT_PlayerMovementController on player death. Halts all spawning.</summary>
+    public bool IsStopped { get; private set; }
+
+    /// <summary>Stop all future spawning. Safe to call multiple times.</summary>
+    public void Stop() => IsStopped = true;
     [SerializeField] private float _phaseTimer  = 0f;
     [SerializeField] private float _spawnInterval;
     [SerializeField] private int   _maxConcurrent;
@@ -104,6 +113,8 @@ public class SCRIPT_WaveController : MonoBehaviour
 
     void Update()
     {
+        if (IsStopped) return;
+
         _phaseTimer += Time.deltaTime;
 
         if (_inReprieve)

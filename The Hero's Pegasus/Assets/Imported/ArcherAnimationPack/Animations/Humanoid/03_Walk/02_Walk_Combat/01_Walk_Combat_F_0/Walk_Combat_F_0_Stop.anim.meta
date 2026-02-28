@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2df5eb448c2620a4e9643436cc14d941
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/02_Walk_Combat/01_Walk_Combat_F_0/Walk_Combat_F_0_Stop.anim
+  uploadId: 729772

@@ -177,6 +177,13 @@ MonoBehaviour:
   strafeStrength: 1
   pitchDuration: {x: 1, y: 2.5}
   pitchStrength: 0.8
+  islandLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  islandAvoidanceLookAhead: 150
+  islandAvoidanceStrength: 0.8
+  islandImpactDamageThreshold: 60
+  islandImpactDamageMultiplier: 5
   escapeTriggerDot: -0.3
   fleeDuration: {x: 1, y: 2.5}
   evadeDuration: {x: 1.5, y: 3}
@@ -193,6 +200,7 @@ MonoBehaviour:
   dashStrikeMaxTurnMult: 3
   dashStrikeSmoothTimeMult: 0.07
   sideOffset: 15
+  aoeActivationClip: {fileID: 0}
   aoeParticleObject: {fileID: 8300828714452726296}
   aoeActivationRadius: 40
   aoeDuration: 3

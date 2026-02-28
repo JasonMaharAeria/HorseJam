@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: aef42544b0df1fc46bd8d1442bd62640
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/05_Jump/01_Jump/04_Jump_L_90/Jump_to_Run_L_90.anim
+  uploadId: 729772

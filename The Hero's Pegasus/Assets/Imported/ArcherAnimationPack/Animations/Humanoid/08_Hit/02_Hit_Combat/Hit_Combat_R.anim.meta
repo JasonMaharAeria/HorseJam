@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6da3366b50de6b843abd717be4e71806
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/02_Hit_Combat/Hit_Combat_R.anim
+  uploadId: 729772
