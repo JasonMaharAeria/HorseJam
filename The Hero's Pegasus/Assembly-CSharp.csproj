@@ -55,6 +55,7 @@
     <Compile Include="Assets\Scripts\SCRIPT_FogController.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_Hero.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyType1.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_AOEHitRelay.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LaserHitRelay.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_Arrow.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_PegasusAnimationController.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Assets\Scripts\SCRIPT_CloudManager.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_CameraController.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_EnemyType3.cs" />
+    <Compile Include="Assets\Scripts\SCRIPT_Minimap.cs" />
     <Compile Include="Assets\Scripts\SCRIPT_LaserController.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -1144,6 +1146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Unity.RenderPipelines.Core.Editor.csproj" />
+    <ProjectReference Include="Unity.2D.Sprite.Editor.csproj" />
     <ProjectReference Include="UnityEditor.UI.Analytics.csproj" />
     <ProjectReference Include="Unity.TextMeshPro.csproj" />
     <ProjectReference Include="Unity.Rendering.LightTransport.Editor.csproj" />
@@ -1193,6 +1196,7 @@
     <ProjectReference Include="Unity.Collections.Editor.csproj" />
     <ProjectReference Include="Unity.ShaderGraph.Editor.csproj" />
     <ProjectReference Include="Unity.RenderPipelines.Core.Editor.Shared.csproj" />
+    <ProjectReference Include="Unity.2D.Sprite.AIIntegration.Editor.csproj" />
     <ProjectReference Include="Unity.InputSystem.csproj" />
     <ProjectReference Include="UnityEditor.UI.csproj" />
   </ItemGroup>
