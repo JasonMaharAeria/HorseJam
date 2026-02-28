@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6b05893083d0264429e79384a989403c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/03_Hit_Air/Hit_Air_R.anim
+  uploadId: 729772

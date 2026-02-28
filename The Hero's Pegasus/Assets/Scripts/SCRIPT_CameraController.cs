@@ -39,6 +39,7 @@ public class SCRIPT_CameraController : MonoBehaviour
     public float loopPositionSmoothTime = 0.25f;
 
     // ── private state ──────────────────────────────────────────────────────────
+    private bool    _frozen;
     private bool    isFirstPerson;
     private bool    _wasFirstPerson;
     private Vector3 positionVelocity;
@@ -60,9 +61,12 @@ public class SCRIPT_CameraController : MonoBehaviour
         smoothLookDir = target != null ? target.forward : transform.forward;
     }
 
+    /// <summary>Lock the camera in place. Called by SCRIPT_PlayerMovementController on death.</summary>
+    public void Freeze() => _frozen = true;
+
     void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null || _frozen) return;
 
         if (playerMovement == null)
             playerMovement = target.GetComponentInParent<SCRIPT_PlayerMovementController>();

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bc3eb0759973b6844b0b31f0f8771bee
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/01_Hit/Hit_R.anim
+  uploadId: 729772

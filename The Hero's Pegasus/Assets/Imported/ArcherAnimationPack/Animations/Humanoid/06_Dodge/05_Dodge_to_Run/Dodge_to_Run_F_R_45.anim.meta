@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 76275871c9155d242b28f554a68496ef
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/06_Dodge/05_Dodge_to_Run/Dodge_to_Run_F_R_45.anim
+  uploadId: 729772

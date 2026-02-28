@@ -123,14 +123,36 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
              "and continuously rotated to track its assigned enemy. Should have SCRIPT_LaserHitRelay.")]
     public GameObject loopLaserPrefab;
 
-    [Header("HUD")]
-    public SCRIPT_HealthBar healthBar;
-    public SCRIPT_StaminaBar staminaBar;
+    [Header("Island Collision")]
+    [Tooltip("Physics layer(s) that island colliders live on. Leave at zero to detect all default layers.")]
+    public LayerMask islandLayerMask;
+    [Tooltip("Sphere radius used to detect island contact. Should roughly match the pegasus body width.")]
+    public float islandBounceCheckRadius = 1.0f;
+    [Tooltip("Fraction of speed kept after bouncing off an island (0 = full stop, 1 = no damping).")]
+    [Range(0f, 1f)]
+    public float islandBounceDamping = 0.65f;
 
+    [Header("Death")]
+    [Tooltip("Seconds after death before the death screen starts fading in.")]
+    public float deathScreenDelay = 2f;
+    [Tooltip("Number of debris pieces spawned when the pegasus disintegrates.")]
+    public int deathDebrisCount = 24;
+    [Tooltip("Outward impulse applied to each debris piece.")]
+    public float deathExplosionForce = 8f;
+    [Tooltip("Additional random impulse per piece to break the uniform shell pattern.")]
+    public float deathExplosionSpread = 5f;
+    [Tooltip("Max random angular velocity (rad/s) giving each piece a tumble.")]
+    public float deathDebrisSpinMax = 12f;
+    [Tooltip("Optional prefab for each debris piece — a small shard, cube, etc. " +
+             "If left empty a default Unity cube primitive is used as a fallback.")]
+    public GameObject deathDebrisPrefab;
 
     // ── private state ──────────────────────────────────────────────────────────
+    //HUD
+    private SCRIPT_HealthBar healthBar;
+    private SCRIPT_StaminaBar staminaBar;
+    // Movement
     private Rigidbody rb;
-
     private float currentYaw;
     private float currentPitch;
     private float currentBank;
@@ -242,12 +264,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             _flipPs = flipParticles.GetComponentInChildren<ParticleSystem>();
             flipParticles.SetActive(false);
         }
-
-        healthBar = GetComponentInChildren<SCRIPT_HealthBar>();
+        //get first healthbarscript in scene
+        healthBar = FindFirstObjectByType<SCRIPT_HealthBar>();
         healthBar.SetMaxHealth(maxHealth);
         healthBar.SetRegeneration(true);
 
-        staminaBar = GetComponentInChildren<SCRIPT_StaminaBar>();
+        staminaBar = FindFirstObjectByType<SCRIPT_StaminaBar>();
         InitPostProcessing();
     }
 
@@ -513,18 +535,18 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         IsDashing = dashing || _flipState == FlipState.Bursting;
 
         // ── turn scaling driven by currentSpeed ────────────────────────────────
-        float speedT   = Mathf.Clamp01(currentSpeed / referenceSpeed);
-        float turnMult = Mathf.Lerp(1f, minTurnMultiplier, speedT);
+        float speedT2   = Mathf.Clamp01(currentSpeed / referenceSpeed);
+        float turnMult2 = Mathf.Lerp(1f, minTurnMultiplier, speedT2);
 
         // ── suppress steering during ANY scripted maneuver ─────────────────────
         bool suppressSteering = _flipState != FlipState.None && _flipState != FlipState.Bursting;
         Vector2 steeringInput = suppressSteering ? Vector2.zero : mouseDelta;
 
-        float desiredYaw   =  steeringInput.x * yawSensitivity   * turnMult;
-        float desiredPitch = -steeringInput.y * pitchSensitivity * turnMult;
+        float desiredYaw2   =  steeringInput.x * yawSensitivity   * turnMult2;
+        float desiredPitch2 = -steeringInput.y * pitchSensitivity * turnMult2;
 
-        yawRate   = Mathf.SmoothDamp(yawRate,   desiredYaw,   ref yawRateVel,   steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
-        pitchRate = Mathf.SmoothDamp(pitchRate, desiredPitch, ref pitchRateVel, steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
+        yawRate   = Mathf.SmoothDamp(yawRate,   desiredYaw2,   ref yawRateVel,   steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
+        pitchRate = Mathf.SmoothDamp(pitchRate, desiredPitch2, ref pitchRateVel, steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
 
         // ── accumulate orientation (overridden during scripted phases) ─────────
         bool scriptedRotation = _flipState == FlipState.VerticalInversion ||
@@ -561,7 +583,60 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         float effectiveSpeed = currentSpeed + downDot * gravitySpeedBonus;
 
-        Vector3 newPosition = rb.position + newRotation * Vector3.forward * effectiveSpeed * Time.fixedDeltaTime;
+        Vector3 moveDir  = newRotation * Vector3.forward;
+        float   moveDist = effectiveSpeed * Time.fixedDeltaTime;
+        Vector3 newPosition = rb.position + moveDir * moveDist;
+
+        // ── island bounce: SphereCast along the movement vector ──────────────
+        if (moveDist > 0f)
+        {
+            int castMask = islandLayerMask != 0
+                ? (int)islandLayerMask
+                : Physics.DefaultRaycastLayers;
+
+            if (Physics.SphereCast(rb.position, islandBounceCheckRadius, moveDir,
+                                   out RaycastHit islandHit, moveDist + islandBounceCheckRadius, castMask) &&
+                islandHit.collider.GetComponentInParent<SCRIPT_FloatingIsland>() != null)
+            {
+                // Non-convex meshes can return inward-pointing normals on interior/concave faces.
+                // If the normal agrees with the movement direction it would drive the player into
+                // the island, so flip it to always oppose movement.
+                Vector3 bounceNormal = islandHit.normal;
+                if (Vector3.Dot(bounceNormal, moveDir) > 0f)
+                    bounceNormal = -bounceNormal;
+
+                // Reflect the flight direction off the corrected surface normal.
+                Vector3 reflected = Vector3.Reflect(moveDir, bounceNormal).normalized;
+
+                currentYaw   = Mathf.Atan2(reflected.x, reflected.z) * Mathf.Rad2Deg;
+                currentPitch = -Mathf.Asin(Mathf.Clamp(reflected.y, -1f, 1f)) * Mathf.Rad2Deg;
+                currentPitch = Mathf.Clamp(currentPitch, -maxPitchAngle, maxPitchAngle);
+                currentBank  = 0f;
+                currentSpeed *= islandBounceDamping;
+
+                // Abort any active scripted maneuver.
+                if (_flipState != FlipState.None)
+                {
+                    _flipState = FlipState.None;
+                    _flipTimer = 0f;
+                    StopLoopLasers();
+                    if (_flipPs != null)
+                        _flipPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    if (flipParticles != null)
+                        flipParticles.SetActive(false);
+                }
+
+                yawRate = 0f; yawRateVel = 0f;
+                pitchRate = 0f; pitchRateVel = 0f;
+
+                // Place the player just outside the surface so the next SphereCast never
+                // starts inside the collider (which would make it blind to the island).
+                // islandHit.point is the surface contact; offset by the sphere radius + a
+                // small epsilon along the validated normal.
+                newRotation = Quaternion.Euler(currentPitch, currentYaw, currentBank);
+                newPosition = islandHit.point + bounceNormal * (islandBounceCheckRadius + 0.1f);
+            }
+        }
 
         rb.MovePosition(newPosition);
         rb.MoveRotation(newRotation);
@@ -768,7 +843,7 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public void TakeDamage(float amount)
     {
         if (!IsAlive || IsDashing) return;
-        _currentHealth = Mathf.Max(0f, _currentHealth - amount);
+        _currentHealth = Mathf.Max(-10f, _currentHealth - amount);
 
         healthBar.SetHealth(_currentHealth);
 
@@ -789,9 +864,87 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     protected virtual void OnDeath()
     {
-        Debug.Log("[Player] Died!");
-
         healthBar.SetRegeneration(false);
+
+        // Freeze stats timer and stop the wave spawner.
+        SCRIPT_GameStats.Instance?.Stop();
+        FindFirstObjectByType<SCRIPT_WaveController>()?.Stop();
+
+        // Freeze the camera in place.
+        FindFirstObjectByType<SCRIPT_CameraController>()?.Freeze();
+
+        // Disintegrate the pegasus visually.
+        Disintegrate();
+
+        // Show the death screen after a delay.
+        SCRIPT_DeathScreen deathScreen = FindFirstObjectByType<SCRIPT_DeathScreen>();
+        if (deathScreen != null)
+            deathScreen.ShowAfterDelay(deathScreenDelay);
+    }
+
+    void Disintegrate()
+    {
+        // ── 1. Measure the model's bounding volume before hiding anything ─────
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer r in renderers)
+            bounds.Encapsulate(r.bounds);
+
+        // Guarantee a minimum size so pieces still spread even on a tiny model.
+        Vector3 minExtent = Vector3.one * 0.5f;
+        bounds.extents = Vector3.Max(bounds.extents, minExtent);
+
+        // ── 2. Hide all renderers so the original vanishes instantly ──────────
+        foreach (Renderer r in renderers)
+            r.enabled = false;
+
+        // ── 3. Spawn debris pieces scattered through the bounding volume ──────
+        Vector3 center = bounds.center;
+
+        for (int i = 0; i < deathDebrisCount; i++)
+        {
+            // Random point inside the model's bounding box.
+            Vector3 spawnPos = new Vector3(
+                Random.Range(bounds.min.x, bounds.max.x),
+                Random.Range(bounds.min.y, bounds.max.y),
+                Random.Range(bounds.min.z, bounds.max.z));
+
+            GameObject piece = deathDebrisPrefab != null
+                ? Instantiate(deathDebrisPrefab, spawnPos, Random.rotation)
+                : CreateDebrisFallback(spawnPos);
+
+            Rigidbody pieceRb = piece.GetComponent<Rigidbody>();
+            if (pieceRb == null) pieceRb = piece.AddComponent<Rigidbody>();
+            pieceRb.useGravity  = true;
+            pieceRb.isKinematic = false;
+
+            // Outward from centre + random spread for a chaotic burst.
+            Vector3 outward = spawnPos - center;
+            if (outward.sqrMagnitude < 0.001f) outward = Random.onUnitSphere;
+            pieceRb.AddForce(outward.normalized * deathExplosionForce
+                           + Random.onUnitSphere * deathExplosionSpread,
+                             ForceMode.Impulse);
+
+            // Random tumble.
+            pieceRb.angularVelocity = Random.onUnitSphere * deathDebrisSpinMax;
+
+            Destroy(piece, 5f);
+        }
+    }
+
+    // Fallback when no deathDebrisPrefab is assigned.
+    // Creates a small randomly-scaled cube using Unity's built-in mesh.
+    static GameObject CreateDebrisFallback(Vector3 pos)
+    {
+        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.transform.position = pos;
+        go.transform.rotation = Random.rotation;
+        float s = Random.Range(0.08f, 0.35f);
+        go.transform.localScale = new Vector3(s, s * Random.Range(0.4f, 2.5f), s);
+
+        // Remove the collider — debris should pass through each other cleanly.
+        Destroy(go.GetComponent<Collider>());
+        return go;
     }
 
     void UpdatePostProcessing()

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c20c94f131b429b4a939f5fcfb984bfd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/07_Skill_Attack/Skill_04_Charge_LV2_Start.anim
+  uploadId: 729772

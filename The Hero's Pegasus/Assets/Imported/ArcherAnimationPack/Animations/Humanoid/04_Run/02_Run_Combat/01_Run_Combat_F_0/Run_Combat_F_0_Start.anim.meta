@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 43e3b8343224b5544a3d351b35e401e1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/04_Run/02_Run_Combat/01_Run_Combat_F_0/Run_Combat_F_0_Start.anim
+  uploadId: 729772

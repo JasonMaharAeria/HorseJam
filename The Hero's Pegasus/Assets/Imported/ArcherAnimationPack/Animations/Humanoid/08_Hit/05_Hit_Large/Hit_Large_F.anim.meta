@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bed80a977c5169f4d9de09249487e24d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/05_Hit_Large/Hit_Large_F.anim
+  uploadId: 729772

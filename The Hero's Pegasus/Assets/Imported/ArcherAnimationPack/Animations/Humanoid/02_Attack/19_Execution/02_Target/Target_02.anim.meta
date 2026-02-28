@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: eca8b53a659642349aba6341d9971af0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/19_Execution/02_Target/Target_02.anim
+  uploadId: 729772

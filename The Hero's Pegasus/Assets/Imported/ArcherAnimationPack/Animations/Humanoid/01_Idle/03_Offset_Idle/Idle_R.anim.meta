@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1e771d36c9c969844b13f9dc585172c1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/01_Idle/03_Offset_Idle/Idle_R.anim
+  uploadId: 729772

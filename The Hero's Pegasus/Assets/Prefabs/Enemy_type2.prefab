@@ -177,6 +177,13 @@ MonoBehaviour:
   strafeStrength: 1
   pitchDuration: {x: 1, y: 2.5}
   pitchStrength: 0.8
+  islandLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  islandAvoidanceLookAhead: 150
+  islandAvoidanceStrength: 0.8
+  islandImpactDamageThreshold: 60
+  islandImpactDamageMultiplier: 5
   escapeTriggerDot: -0.3
   fleeDuration: {x: 1, y: 2.5}
   evadeDuration: {x: 1.5, y: 3}
@@ -187,6 +194,7 @@ MonoBehaviour:
   _escapeCooldown: 0
   preferredDist: 50
   orbitStrength: 0.6
+  projectileFireClip: {fileID: 0}
   projectilePrefab: {fileID: 5700400001760814419, guid: 59ad7804f71ef684d93c0cab854a2ce0, type: 3}
   firePoint: {fileID: 9001566037549998486}
   projectileSpeed: 100

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b29eab46fd0fb9b47a0de0a8f1fe1eb7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/02_Attack/18_Dodge_Attack/01_Dodge_Attack/Dodge_Attack_B.anim
+  uploadId: 729772

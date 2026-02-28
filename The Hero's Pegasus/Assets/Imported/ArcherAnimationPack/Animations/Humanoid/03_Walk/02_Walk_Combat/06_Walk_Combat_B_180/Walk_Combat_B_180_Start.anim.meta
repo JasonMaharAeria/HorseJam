@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f94d796c4d7c9cc4493ce14d3493baff
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/02_Walk_Combat/06_Walk_Combat_B_180/Walk_Combat_B_180_Start.anim
+  uploadId: 729772

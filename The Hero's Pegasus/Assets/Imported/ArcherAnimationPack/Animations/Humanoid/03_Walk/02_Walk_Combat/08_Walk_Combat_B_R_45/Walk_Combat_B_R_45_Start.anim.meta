@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c93093cf33e051648a3506057cbd26b2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/02_Walk_Combat/08_Walk_Combat_B_R_45/Walk_Combat_B_R_45_Start.anim
+  uploadId: 729772

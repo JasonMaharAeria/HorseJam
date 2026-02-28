@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4cd651aec9fd7594f9458314b152634c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/04_Run/01_Run/02_Run_F_L_45/Run_F_L_45_Loop.anim
+  uploadId: 729772

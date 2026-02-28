@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 866a072b3a314134ab66036e1400127d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/05_Jump/01_Jump/03_Jump_B_180/Jump_End_B_180.anim
+  uploadId: 729772

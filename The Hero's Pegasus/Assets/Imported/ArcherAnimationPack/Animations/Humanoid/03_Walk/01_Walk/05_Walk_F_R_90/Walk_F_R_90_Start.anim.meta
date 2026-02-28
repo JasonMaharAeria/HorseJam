@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8b90fcefdebf1e94b84bca200d1ba5ec
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/01_Walk/05_Walk_F_R_90/Walk_F_R_90_Start.anim
+  uploadId: 729772

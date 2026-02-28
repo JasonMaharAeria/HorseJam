@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 00354c4ee53c7cc43b716ad3a1e848a8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/04_Run/01_Run/03_Run_F_R_45/Run_F_R_45_Start.anim
+  uploadId: 729772

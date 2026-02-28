@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2850325eeb9bcc648a6d05a5340d35f2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/01_Idle/05_Offset_Aim/Idle_Aim_Down_0.anim
+  uploadId: 729772

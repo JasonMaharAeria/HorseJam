@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 46bebbce05484c74588cb79ef1140fd3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/03_Walk/03_Walk_Block/09_Walk_Block_B_L_90/Walk_Block_B_L_90_Loop.anim
+  uploadId: 729772

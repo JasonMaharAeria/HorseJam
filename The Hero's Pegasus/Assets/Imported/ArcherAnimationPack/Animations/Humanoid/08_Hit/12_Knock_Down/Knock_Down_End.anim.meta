@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d73a72482ccc36b4aa064570b30efdc9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/12_Knock_Down/Knock_Down_End.anim
+  uploadId: 729772

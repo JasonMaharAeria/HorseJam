@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c375ec378d7f7fc498e80318ea0458a2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/05_Jump/02_Jump_Combat/04_Jump_Combat_L_90/Jump_Combat_Start_L_90.anim
+  uploadId: 729772

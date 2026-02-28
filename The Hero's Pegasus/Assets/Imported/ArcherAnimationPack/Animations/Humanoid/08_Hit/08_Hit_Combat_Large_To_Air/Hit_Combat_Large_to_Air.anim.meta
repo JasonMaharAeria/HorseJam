@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9a005b7d810e675408eb57321200a96e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 309940
+  packageName: Archer Animation Pack
+  packageVersion: 1.0
+  assetPath: Assets/ArcherAnimationPack/Animations/Humanoid/08_Hit/08_Hit_Combat_Large_To_Air/Hit_Combat_Large_to_Air.anim
+  uploadId: 729772

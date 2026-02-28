@@ -111,5 +111,6 @@ public class SCRIPT_PegasusAnimationController : MonoBehaviour
         // ── push to animator ───────────────────────────────────────────────────
         animator.SetFloat(flapBlendHash, smoothFlapBlend);
         animator.speed = smoothFlapSpeed;
+
     }
 }
