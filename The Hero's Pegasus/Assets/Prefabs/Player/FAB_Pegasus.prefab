@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 4405604858993919711}
   - component: {fileID: 6283976494197455429}
   - component: {fileID: 6526892700965336871}
+  - component: {fileID: 2370894425101128730}
   m_Layer: 0
   m_Name: FAB_Pegasus
   m_TagString: Player
@@ -192,7 +193,7 @@ MonoBehaviour:
   flipCooldownSeconds: 2
   flipParticles: {fileID: 0}
   health: 1000
-  staminaBar: {fileID: 0}
+  staminaBar: {fileID: 2370894425101128730}
 --- !u!114 &6526892700965336871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +207,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_LaserController
   laserParticles: {fileID: 334107922181665287}
+--- !u!114 &2370894425101128730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 98775198429567176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9b680af7ee968c4a83bcb5f6c3cced3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_StaminaBar
+  secondsOfStamina: 5
+  secondsToRefreshStamina: 10
+  currentStamina: 0
+  isOnCooldown: 0
+  staminaSlider: {fileID: 0}
+  fillImage: {fileID: 0}
+  normalColor: {r: 0, g: 1, b: 0, a: 1}
+  exhaustedColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &279130672724157722
 GameObject:
   m_ObjectHideFlags: 0
