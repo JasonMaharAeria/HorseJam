@@ -181,6 +181,9 @@ MonoBehaviour:
   circleReverseAllowed: 25
   circleMinDiameter: 120
   circleMinPathLength: 420
+  maxHealth: 100
+  _currentHealth: 0
+  dashKillRadius: 3
   flipVerticalDuration: 0.2
   flipHorizontalDuration: 0.24
   flipSlowMultiplier: 0.215
@@ -188,6 +191,8 @@ MonoBehaviour:
   burstDurationSeconds: 0.4
   flipCooldownSeconds: 2
   flipParticles: {fileID: 0}
+  health: 1000
+  staminaBar: {fileID: 0}
 --- !u!114 &6526892700965336871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1328,9 +1333,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_Hero
   arrowPrefab: {fileID: 5700400001760814419, guid: 6ff9975be41dbcb4999ed27f988420bc, type: 3}
   arrowVelocity: 130.3
-  arrowDamage: 20
-  fireRate: 1
-  aimOffsetDegrees: 2
+  arrowDamage: 5
+  fireRate: 2
+  aimOffsetDegrees: 3
   rotationSpeed: 270
   firePoint: {fileID: 1090287280247317436}
   pegasus: {fileID: 3486943141806365876}
