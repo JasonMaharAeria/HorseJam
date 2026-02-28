@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Enemy Type 3 — Close-Range AOE Attacker.
@@ -42,6 +43,10 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
     [Header("Lateral Offset")]
     [Tooltip("How far to the side of the player the enemy targets during the dash (world units).")]
     public float sideOffset = 6f;
+
+    [Header("AOE Audio")]
+    [Tooltip("Played at the enemy's position each time the AOE cone activates (first strike and every repeat).")]
+    public AudioClip aoeActivationClip;
 
     [Header("AOE Attack")]
     [Tooltip("Child GameObject that contains the cone ParticleSystem and SCRIPT_AOEHitRelay. " +
@@ -178,6 +183,14 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
 
         _aoeActive = true;
         _aoeTimer  = aoeDuration;
+
+        // Play the activation sting — fires on first activation and again on each repeat.
+        if (aoeActivationClip != null)
+        {
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(aoeActivationClip, transform.position, sfx);
+        }
 
         aoeParticleObject.SetActive(true);
         OrientAoeTowardPlayer();
