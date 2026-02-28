@@ -124,9 +124,7 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public GameObject loopLaserPrefab;
 
     [Header("HUD")]
-    [Tooltip("Health points. Player is killed when it reaches 0.")]
-    public float health = 1000f;
-
+    public SCRIPT_HealthBar healthBar;
     public SCRIPT_StaminaBar staminaBar;
 
 
@@ -244,6 +242,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             _flipPs = flipParticles.GetComponentInChildren<ParticleSystem>();
             flipParticles.SetActive(false);
         }
+
+        healthBar = GetComponentInChildren<SCRIPT_HealthBar>();
+        healthBar.SetMaxHealth(maxHealth);
+        healthBar.SetRegeneration(true);
 
         staminaBar = GetComponentInChildren<SCRIPT_StaminaBar>();
         InitPostProcessing();
@@ -767,7 +769,11 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     {
         if (!IsAlive || IsDashing) return;
         _currentHealth = Mathf.Max(0f, _currentHealth - amount);
-        if (_currentHealth <= 0f) OnDeath();
+
+        healthBar.SetHealth(_currentHealth);
+
+        if (_currentHealth <= 0f)
+            OnDeath();
     }
 
     void CheckDashKill()
@@ -784,6 +790,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     protected virtual void OnDeath()
     {
         Debug.Log("[Player] Died!");
+
+        healthBar.SetRegeneration(false);
     }
 
     void UpdatePostProcessing()
