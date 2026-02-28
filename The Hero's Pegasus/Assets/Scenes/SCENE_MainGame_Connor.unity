@@ -1468,6 +1468,26 @@ PrefabInstance:
       propertyPath: globalVolume
       value: 
       objectReference: {fileID: 832575518}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopFireRange
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopFlickWindow
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopLaserPrefab
+      value: 
+      objectReference: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopCooldownSeconds
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6283976494197455429, guid: b9cc997432a81604fa49e8cbbda0be58, type: 3}
+      propertyPath: loopFlickMinDisplacement
+      value: 300
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
