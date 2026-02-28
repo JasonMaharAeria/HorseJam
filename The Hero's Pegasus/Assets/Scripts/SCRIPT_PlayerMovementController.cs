@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;           // Volume
@@ -12,9 +13,9 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     [Header("Dash")]
     public float      dashSpeed      = 60f;
-    public float      dashRampUp     = 8f;   // exponential ramp rate toward dashSpeed
-    public float      dashRampDown   = 3f;   // exponential ramp rate back to flightSpeed
-    public GameObject dashParticles;          // activated on RMB press, deactivated on release
+    public float      dashRampUp     = 8f;
+    public float      dashRampDown   = 3f;
+    public GameObject dashParticles;
 
     [Header("Gravity Influence")]
     [Tooltip("Extra speed added when flying straight down (scales with how directly downward you point)")]
@@ -71,12 +72,10 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public bool  IsAlive       => _currentHealth > 0f;
 
     [Header("Dash Attack")]
-    [Tooltip("Enemies within this radius are instantly destroyed while dashing or bursting. " +
-             "Tune to roughly match the pegasus's visual size.")]
+    [Tooltip("Enemies within this radius are instantly destroyed while dashing or bursting.")]
     public float dashKillRadius = 3f;
 
-    /// <summary>True while RMB dash is held or the post-flip burst is active.
-    /// Used for damage immunity and dash-kill detection.</summary>
+    /// <summary>True while RMB dash is held or the post-flip burst is active.</summary>
     public bool IsDashing { get; private set; }
 
     [Header("Circle Flip — Maneuver")]
@@ -92,10 +91,37 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     [Tooltip("How long the burst speed holds after the flip completes")]
     public float burstDurationSeconds   = 0.4f;
     [Tooltip("Minimum seconds between flip triggers")]
-    public float flipCooldownSeconds  = 2.0f;
+    public float flipCooldownSeconds    = 2.0f;
     public GameObject flipParticles;
 
+    [Header("Vertical Loop — Detection")]
+    [Tooltip("Minimum mouse speed (px/s) for a frame to count toward the upward flick.")]
+    public float loopFlickMinSpeed = 500f;
+    [Tooltip("Time window (seconds) over which the upward displacement is accumulated.")]
+    public float loopFlickWindow = 0.1f;
+    [Tooltip("Total upward pixel displacement required within the window to trigger the loop.")]
+    public float loopFlickMinDisplacement = 60f;
+    [Tooltip("The upward (Y) component must be at least this fraction of the total delta magnitude.")]
+    [Range(0f, 1f)]
+    public float loopFlickMinVerticalFraction = 0.7f;
+    [Tooltip("Seconds before another loop can trigger after one completes.")]
+    public float loopCooldownSeconds = 4f;
 
+    [Header("Vertical Loop — Maneuver")]
+    [Tooltip("Radius of the loop circle in world units.")]
+    public float loopRadius = 15f;
+    [Tooltip("Seconds to complete a full 360-degree loop. Controls loop finish speed regardless of radius.")]
+    public float loopDurationSeconds = 2.5f;
+    [Tooltip("Starting speed multiplier for the loop. Lower values keep the early loop slower; end speed is auto-calculated so the full loop still completes exactly on time.")]
+    [Range(0.1f, 1f)]
+    public float loopFirstHalfSpeedMultiplier = 0.7f;
+    [Tooltip("Max world-space radius to search for lock-on targets when loop laser lock-on begins.")]
+    public float loopFireRange = 80f;
+    [Tooltip("Maximum number of enemies to lock on to simultaneously.")]
+    public int   loopMaxTargets = 6;
+    [Tooltip("Laser particle prefab instantiated per locked target when loop lock-on begins. Parented to the player " +
+             "and continuously rotated to track its assigned enemy. Should have SCRIPT_LaserHitRelay.")]
+    public GameObject loopLaserPrefab;
 
     [Header("HUD")]
     [Tooltip("Health points. Player is killed when it reaches 0.")]
@@ -115,10 +141,7 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     private float pitchRate, pitchRateVel;
 
     private Vector2 pendingMouseDelta;
-
-    // currentSpeed is driven by dash input and gravity; used for both movement
-    // and for feeding the speed-based maneuverability calculation.
-    private float currentSpeed;
+    private float   currentSpeed;
 
     // Dash particles
     private ParticleSystem dashPs;
@@ -130,35 +153,63 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     private float          baseVignette;
 
     // ── circle gesture detection ───────────────────────────────────────────────
-    private float _gestureAccumulatedAngle;
-    private float _gestureElapsed;
-    private float _gesturePrevAngle;
-    private bool  _gestureTracking;
-    private int   _gestureDirection;   // +1 = CCW, -1 = CW
-    private float _gesturePathLength;
+    private float   _gestureAccumulatedAngle;
+    private float   _gestureElapsed;
+    private float   _gesturePrevAngle;
+    private bool    _gestureTracking;
+    private int     _gestureDirection;
+    private float   _gesturePathLength;
     private Vector2 _gestureTracePos;
     private Vector2 _gestureTraceMin;
     private Vector2 _gestureTraceMax;
 
+    // ── loop flick gesture detection ───────────────────────────────────────────
+    private float _loopFlickAccumY;
+    private float _loopFlickWindowTimer;
+
     // ── flip state machine ─────────────────────────────────────────────────────
-    private enum FlipState { None, VerticalInversion, HorizontalTurn, Bursting }
-    private FlipState _flipState            = FlipState.None;
-    private float     _flipTimer            = 0f;
-    private float     _flipStartYaw         = 0f;
-    private float     _flipStartPitch       = 0f;
-    private float     _flipStartBank        = 0f;
-    private float     _flipEntrySpeed       = 0f;
+    private enum FlipState
+    {
+        None,
+        VerticalInversion, HorizontalTurn, Bursting,   // circle-flip maneuver
+        Looping                                         // vertical loop maneuver
+    }
+    private FlipState _flipState             = FlipState.None;
+    private float     _flipTimer             = 0f;
+    private float     _flipStartYaw          = 0f;
+    private float     _flipStartPitch        = 0f;
+    private float     _flipStartBank         = 0f;
+    private float     _flipEntrySpeed        = 0f;
     private float     _flipCooldownRemaining = 0f;
 
     // Flip particles
     private ParticleSystem _flipPs;
 
-    // Reusable buffer for dash-kill overlap checks — avoids per-frame heap allocation.
+    // ── loop maneuver state ────────────────────────────────────────────────────
+    private float   _loopStartPitch;
+    private float   _loopStartYaw;
+    private float   _loopStartBank;
+    private float   _loopStartSpeed;     // base loop speed for multiplier = 1
+    private float   _loopDuration;       // full 360-degree loop duration (seconds), computed at trigger
+    private float   _loopProgress;       // 0 → 1 over the full loop, exposed for camera
+    private bool    _loopFiredYet;       // true once lasers have been spawned for this loop
+
+    // Entry-frame orientation vectors exposed for the camera boom calculation.
+    public bool    IsLooping        => _flipState == FlipState.Looping;
+    public float   LoopProgress     => _loopProgress;
+    public Vector3 LoopEntryForward { get; private set; }
+    public Vector3 LoopEntryRight   { get; private set; }
+
+    private readonly List<GameObject> _loopLasers = new();
+
+    // Reusable buffer for dash-kill overlap checks.
     private readonly Collider[] _dashKillBuffer = new Collider[32];
 
-    // Camera stays in pre-maneuver framing until burst starts.
+    // Camera holds its forward during the circle-flip only.
+    // The loop has its own cinematic camera handled in SCRIPT_CameraController.
     public bool HoldCameraUntilBurst =>
-        _flipState == FlipState.VerticalInversion || _flipState == FlipState.HorizontalTurn;
+        _flipState == FlipState.VerticalInversion ||
+        _flipState == FlipState.HorizontalTurn;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -173,8 +224,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         currentPitch = transform.eulerAngles.x;
         if (currentPitch > 180f) currentPitch -= 360f;
 
-        currentSpeed    = flightSpeed;
-        _currentHealth  = maxHealth;
+        currentSpeed   = flightSpeed;
+        _currentHealth = maxHealth;
     }
 
     void Start()
@@ -195,7 +246,6 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         }
 
         staminaBar = GetComponentInChildren<SCRIPT_StaminaBar>();
-
         InitPostProcessing();
     }
 
@@ -206,7 +256,6 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         if (globalVolume == null) return;
 
-        // Clone the profile so we never write back to the shared asset on disk.
         globalVolume.profile = Instantiate(globalVolume.profile);
 
         globalVolume.profile.TryGet(out lensDistortion);
@@ -230,14 +279,15 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     {
         Vector2 rawDelta = Mouse.current.delta.ReadValue();
 
-        // Gesture detector reads raw per-frame delta before it gets batched.
         UpdateGestureDetection(rawDelta, Time.deltaTime);
+        UpdateLoopFlickDetection(rawDelta, Time.deltaTime);
 
         pendingMouseDelta += rawDelta;
 
         if (dashParticles != null)
         {
-            if (Mouse.current.rightButton.wasPressedThisFrame || (Mouse.current.rightButton.isPressed && staminaBar.IsFull()))  
+            if (Mouse.current.rightButton.wasPressedThisFrame ||
+               (Mouse.current.rightButton.isPressed && staminaBar.IsFull()))
             {
                 dashParticles.SetActive(true);
                 if (dashPs != null) dashPs.Play(withChildren: true);
@@ -256,14 +306,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void UpdateGestureDetection(Vector2 rawDelta, float dt)
     {
-        // Tick cooldown.
         if (_flipCooldownRemaining > 0f)
         {
             _flipCooldownRemaining -= dt;
             if (_flipCooldownRemaining < 0f) _flipCooldownRemaining = 0f;
         }
 
-        // No gesture tracking while a flip or burst is active, or during cooldown.
         if (_flipState != FlipState.None || _flipCooldownRemaining > 0f)
         {
             ResetGesture();
@@ -281,24 +329,21 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         }
 
         float speed = rawDelta.magnitude / Mathf.Max(dt, 0.0001f);
-
-        if (speed < circleMinMouseSpeed)
-            return;
+        if (speed < circleMinMouseSpeed) return;
 
         float currentAngle = Mathf.Atan2(rawDelta.y, rawDelta.x) * Mathf.Rad2Deg;
 
-        // Seed the tracking on the first fast-enough frame.
         if (!_gestureTracking)
         {
-            _gestureTracking          = true;
-            _gesturePrevAngle         = currentAngle;
-            _gestureAccumulatedAngle  = 0f;
-            _gestureElapsed           = 0f;
-            _gestureDirection         = 0;
-            _gesturePathLength        = 0f;
-            _gestureTracePos          = Vector2.zero;
-            _gestureTraceMin          = Vector2.zero;
-            _gestureTraceMax          = Vector2.zero;
+            _gestureTracking         = true;
+            _gesturePrevAngle        = currentAngle;
+            _gestureAccumulatedAngle = 0f;
+            _gestureElapsed          = 0f;
+            _gestureDirection        = 0;
+            _gesturePathLength       = 0f;
+            _gestureTracePos         = Vector2.zero;
+            _gestureTraceMin         = Vector2.zero;
+            _gestureTraceMax         = Vector2.zero;
             return;
         }
 
@@ -309,18 +354,16 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         float delta = Mathf.DeltaAngle(_gesturePrevAngle, currentAngle);
 
-        // Establish rotation direction on first substantial frame.
         if (_gestureDirection == 0)
         {
             if (Mathf.Abs(delta) > 5f)
                 _gestureDirection = delta > 0f ? 1 : -1;
-            _gesturePrevAngle  = currentAngle;
+            _gesturePrevAngle = currentAngle;
             return;
         }
 
         float signedDelta = _gestureDirection * delta;
 
-        // Intentional gesture: significant reversals invalidate and restart.
         if (signedDelta < -circleReverseAllowed)
         {
             ResetGesture();
@@ -330,9 +373,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         if (signedDelta > 0f)
             _gestureAccumulatedAngle += Mathf.Abs(signedDelta);
 
-        _gesturePrevAngle  = currentAngle;
+        _gesturePrevAngle = currentAngle;
 
-        // Trigger!
         if (_gestureAccumulatedAngle >= circleAngleThreshold && GestureShapeLooksIntentional())
             TriggerFlip();
     }
@@ -367,7 +409,6 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         _flipStartBank  = currentBank;
         _flipEntrySpeed = Mathf.Max(currentSpeed, 1f);
 
-        // Zero out angular velocity so SmoothDamp doesn't fight the flip.
         yawRate      = 0f;
         yawRateVel   = 0f;
         pitchRate    = 0f;
@@ -380,6 +421,67 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             flipParticles.SetActive(true);
             if (_flipPs != null) _flipPs.Play(withChildren: true);
         }
+    }
+
+    // ── loop flick gesture detection ───────────────────────────────────────────
+
+    void UpdateLoopFlickDetection(Vector2 rawDelta, float dt)
+    {
+        if (_flipState != FlipState.None || _flipCooldownRemaining > 0f)
+        {
+            _loopFlickAccumY      = 0f;
+            _loopFlickWindowTimer = 0f;
+            return;
+        }
+
+        _loopFlickWindowTimer = Mathf.Max(0f, _loopFlickWindowTimer - dt);
+        if (_loopFlickWindowTimer <= 0f)
+            _loopFlickAccumY = 0f;
+
+        float totalSpeed = rawDelta.magnitude / Mathf.Max(dt, 0.0001f);
+
+        if (totalSpeed >= loopFlickMinSpeed && rawDelta.y > 0f)
+        {
+            float verticalFraction = rawDelta.y / rawDelta.magnitude;
+            if (verticalFraction >= loopFlickMinVerticalFraction)
+            {
+                if (_loopFlickWindowTimer <= 0f)
+                    _loopFlickWindowTimer = loopFlickWindow;
+
+                _loopFlickAccumY += rawDelta.y;
+            }
+        }
+
+        if (_loopFlickAccumY >= loopFlickMinDisplacement)
+        {
+            _loopFlickAccumY      = 0f;
+            _loopFlickWindowTimer = 0f;
+            TriggerLoop();
+        }
+    }
+
+    void TriggerLoop()
+    {
+        _flipState      = FlipState.Looping;
+        _flipTimer      = 0f;
+        _loopStartPitch = currentPitch;
+        _loopStartYaw   = currentYaw;
+        _loopStartBank  = currentBank;
+        _loopDuration   = Mathf.Max(0.01f, loopDurationSeconds);
+        _loopStartSpeed = 2f * Mathf.PI * Mathf.Max(0.01f, loopRadius) / _loopDuration;
+        _loopFiredYet   = false;
+        _loopProgress   = 0f;
+
+        // Capture entry orientation for the camera boom calculation.
+        LoopEntryForward = transform.forward;
+        LoopEntryRight   = transform.right;
+
+        yawRate      = 0f;
+        yawRateVel   = 0f;
+        pitchRate    = 0f;
+        pitchRateVel = 0f;
+
+        ResetGesture();
     }
 
     // ── physics ────────────────────────────────────────────────────────────────
@@ -396,25 +498,25 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         if (dashing)
             staminaBar.UseStamina();
-        else 
+        else
             staminaBar.RegenStamina();
-
 
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed,
                                   1f - Mathf.Exp(-ramp * Time.fixedDeltaTime));
 
-        // ── flip state machine (may override currentSpeed) ─────────────────────
+        // ── flip / loop state machine (may override currentSpeed) ──────────────
         UpdateFlipStateMachine();
 
-        // ── dash state (set after flip machine so Bursting is already current) ─
+        // ── dash state ─────────────────────────────────────────────────────────
         IsDashing = dashing || _flipState == FlipState.Bursting;
 
         // ── turn scaling driven by currentSpeed ────────────────────────────────
         float speedT   = Mathf.Clamp01(currentSpeed / referenceSpeed);
         float turnMult = Mathf.Lerp(1f, minTurnMultiplier, speedT);
 
-        // ── smooth angular rates (suppressed during maneuver/burst) ────────────
-        Vector2 steeringInput = (_flipState == FlipState.None) ? mouseDelta : Vector2.zero;
+        // ── suppress steering during ANY scripted maneuver ─────────────────────
+        bool suppressSteering = _flipState != FlipState.None && _flipState != FlipState.Bursting;
+        Vector2 steeringInput = suppressSteering ? Vector2.zero : mouseDelta;
 
         float desiredYaw   =  steeringInput.x * yawSensitivity   * turnMult;
         float desiredPitch = -steeringInput.y * pitchSensitivity * turnMult;
@@ -422,9 +524,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         yawRate   = Mathf.SmoothDamp(yawRate,   desiredYaw,   ref yawRateVel,   steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
         pitchRate = Mathf.SmoothDamp(pitchRate, desiredPitch, ref pitchRateVel, steeringSmoothTime, Mathf.Infinity, Time.fixedDeltaTime);
 
-        // ── accumulate orientation (overridden during the flip maneuver) ───────
-        bool maneuvering = _flipState == FlipState.VerticalInversion || _flipState == FlipState.HorizontalTurn;
-        if (!maneuvering)
+        // ── accumulate orientation (overridden during scripted phases) ─────────
+        bool scriptedRotation = _flipState == FlipState.VerticalInversion ||
+                                _flipState == FlipState.HorizontalTurn    ||
+                                _flipState == FlipState.Looping;
+
+        if (!scriptedRotation)
         {
             currentYaw   += yawRate;
             currentPitch += pitchRate;
@@ -432,14 +537,13 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         }
         else
         {
-            // Keep angular rates clean so inertia doesn't kick on maneuver exit.
-            yawRate    = 0f;
-            yawRateVel = 0f;
-            pitchRate  = 0f;
+            yawRate      = 0f;
+            yawRateVel   = 0f;
+            pitchRate    = 0f;
             pitchRateVel = 0f;
         }
 
-        if (!maneuvering)
+        if (!scriptedRotation)
         {
             float targetBank = enableBanking ? -yawRate * bankStrength : 0f;
             currentBank = Mathf.Lerp(currentBank, targetBank,
@@ -448,17 +552,18 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         Quaternion newRotation = Quaternion.Euler(currentPitch, currentYaw, currentBank);
 
-        // ── gravity speed bonus ────────────────────────────────────────────────
-        float downDot        = Mathf.Clamp01(Vector3.Dot(newRotation * Vector3.forward, Vector3.down));
+        // Suppress gravity bonus during the loop so the circular path stays true.
+        float downDot = _flipState == FlipState.Looping
+            ? 0f
+            : Mathf.Clamp01(Vector3.Dot(newRotation * Vector3.forward, Vector3.down));
+
         float effectiveSpeed = currentSpeed + downDot * gravitySpeedBonus;
 
-        // ── apply ──────────────────────────────────────────────────────────────
         Vector3 newPosition = rb.position + newRotation * Vector3.forward * effectiveSpeed * Time.fixedDeltaTime;
 
         rb.MovePosition(newPosition);
         rb.MoveRotation(newRotation);
 
-        // ── dash kill ──────────────────────────────────────────────────────────
         if (IsDashing)
             CheckDashKill();
     }
@@ -472,24 +577,22 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             case FlipState.None:
                 return;
 
+            // ── circle flip ───────────────────────────────────────────────────
+
             case FlipState.VerticalInversion:
                 _flipTimer += Time.fixedDeltaTime;
                 {
-                    float phaseDuration = Mathf.Max(0.01f, flipVerticalDuration);
-                    float t = Mathf.Clamp01(_flipTimer / phaseDuration);
-                    float eased = Mathf.SmoothStep(0f, 1f, t);
-                    float yawLeadT = Mathf.Clamp01((eased - 0.5f) / 0.5f);
+                    float dur    = Mathf.Max(0.01f, flipVerticalDuration);
+                    float t      = Mathf.Clamp01(_flipTimer / dur);
+                    float eased  = Mathf.SmoothStep(0f, 1f, t);
+                    float yawT   = Mathf.Clamp01((eased - 0.5f) / 0.5f);
 
-                    // Phase 1: rotate in the vertical plane to upside-down.
-                    // Begin yaw halfway through this phase.
                     currentPitch = _flipStartPitch + eased * 180f;
-                    currentYaw   = _flipStartYaw + yawLeadT * 90f;
+                    currentYaw   = _flipStartYaw + yawT * 90f;
                     currentBank  = _flipStartBank;
-
-                    // Slow continuously during the maneuver.
                     currentSpeed = Mathf.Lerp(_flipEntrySpeed, slowTargetSpeed, eased * 0.5f);
 
-                    if (_flipTimer >= phaseDuration)
+                    if (_flipTimer >= dur)
                     {
                         _flipState = FlipState.HorizontalTurn;
                         _flipTimer = 0f;
@@ -500,28 +603,22 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             case FlipState.HorizontalTurn:
                 _flipTimer += Time.fixedDeltaTime;
                 {
-                    float phaseDuration = Mathf.Max(0.01f, flipHorizontalDuration);
-                    float t = Mathf.Clamp01(_flipTimer / phaseDuration);
+                    float dur   = Mathf.Max(0.01f, flipHorizontalDuration);
+                    float t     = Mathf.Clamp01(_flipTimer / dur);
                     float eased = Mathf.SmoothStep(0f, 1f, t);
 
-                    // Phase 2: yaw around to opposite heading while righting the body.
                     currentYaw   = _flipStartYaw + 90f + eased * 90f;
                     currentPitch = _flipStartPitch + (1f - eased) * 180f;
                     currentBank  = _flipStartBank;
-
                     currentSpeed = Mathf.Lerp(_flipEntrySpeed, slowTargetSpeed, 0.5f + eased * 0.5f);
 
-                    if (_flipTimer >= phaseDuration)
+                    if (_flipTimer >= dur)
                     {
-                        // Snap to exact final orientation.
                         currentYaw   = _flipStartYaw + 180f;
                         currentPitch = _flipStartPitch;
                         currentBank  = _flipStartBank;
-
-                        _flipTimer = 0f;
-                        _flipState = FlipState.Bursting;
-
-                        // Burst only after the full maneuver completes.
+                        _flipTimer   = 0f;
+                        _flipState   = FlipState.Bursting;
                         currentSpeed = burstSpeed;
                     }
                 }
@@ -529,8 +626,6 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
             case FlipState.Bursting:
                 _flipTimer += Time.fixedDeltaTime;
-
-                // Hold burst speed, overriding the dash ramp that ran above.
                 currentSpeed = burstSpeed;
 
                 if (_flipTimer >= burstDurationSeconds)
@@ -539,31 +634,140 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
                     _flipTimer             = 0f;
                     _flipCooldownRemaining = flipCooldownSeconds;
 
-                    // Do NOT reset currentSpeed — let the dash ramp decay it naturally.
-
                     if (_flipPs != null)
                         _flipPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
                     if (flipParticles != null)
                         flipParticles.SetActive(false);
                 }
                 break;
+
+            // ── vertical loop — single continuous 360° pitch sweep ─────────────
+            //
+            //   Duration is controlled directly by loopDurationSeconds.
+            //   Loop speed is derived at trigger time so larger radii move faster.
+            //   Speed transitions smoothly from slower early to faster late.
+            //   Lasers start at 90 degrees into the loop (progress = 0.25).
+
+            case FlipState.Looping:
+                _flipTimer += Time.fixedDeltaTime;
+                {
+                    // Time-normalized loop phase.
+                    float loopT = Mathf.Clamp01(_flipTimer / _loopDuration);
+
+                    // Start below 1, end above 1, with average multiplier of exactly 1
+                    // so the loop still completes on the configured duration.
+                    float startMult = Mathf.Clamp(loopFirstHalfSpeedMultiplier, 0.1f, 1f);
+                    float endMult   = Mathf.Max(0.01f, 2f - startMult);
+
+                    // Smooth easing from start -> end without any sudden jump.
+                    float smoothT   = loopT * loopT * (3f - 2f * loopT); // smoothstep(0..1)
+                    float speedMult = Mathf.Lerp(startMult, endMult, smoothT);
+
+                    // Integral of speedMult over loop time gives exact angle progress.
+                    // For smoothstep: ∫(3t^2 - 2t^3)dt = t^3 - 0.5t^4
+                    _loopProgress = startMult * loopT
+                                  + (endMult - startMult) * (loopT * loopT * loopT - 0.5f * loopT * loopT * loopT * loopT);
+                    _loopProgress = Mathf.Clamp01(_loopProgress);
+
+                    // Matching speed profile preserves loop radius while progress advances.
+                    currentSpeed = _loopStartSpeed * speedMult;
+                }
+
+                currentPitch = _loopStartPitch - _loopProgress * 360f;
+                currentYaw   = _loopStartYaw;
+                currentBank  = 0f;
+
+                // Fire lasers once at 90 degrees into the loop (quarter progress).
+                if (!_loopFiredYet && _loopProgress >= 0.25f)
+                {
+                    _loopFiredYet = true;
+                    FireLoopLasers();
+                }
+
+                if (_flipTimer >= _loopDuration)
+                {
+                    // Snap back to exact entry values — eliminates float drift.
+                    currentPitch           = _loopStartPitch;
+                    currentBank            = _loopStartBank;
+                    _loopProgress          = 1f;
+                    _flipTimer             = 0f;
+                    _flipState             = FlipState.None;
+                    _flipCooldownRemaining = loopCooldownSeconds;
+                    StopLoopLasers();
+                }
+                break;
         }
+    }
+
+    // ── loop laser helpers ─────────────────────────────────────────────────────
+
+    void FireLoopLasers()
+    {
+        if (loopLaserPrefab == null) return;
+
+        SCRIPT_EnemyBase[] all = FindObjectsByType<SCRIPT_EnemyBase>(FindObjectsSortMode.None);
+        if (all.Length == 0) return;
+
+        float sqrRange = loopFireRange * loopFireRange;
+        bool[] used    = new bool[all.Length];
+        int    fired   = 0;
+
+        while (fired < loopMaxTargets)
+        {
+            int   best    = -1;
+            float bestSqr = sqrRange;
+
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (used[i] || all[i] == null) continue;
+                float sqr = (all[i].transform.position - transform.position).sqrMagnitude;
+                if (sqr < bestSqr) { bestSqr = sqr; best = i; }
+            }
+
+            if (best == -1) break;
+
+            used[best] = true;
+
+            Vector3    dir = (all[best].transform.position - transform.position).normalized;
+
+            // Parent to player so the emitter follows us through the loop.
+            // World-space particle simulation means each new particle fires from the
+            // current player position toward the target — creates a continuous beam.
+            GameObject go = Instantiate(loopLaserPrefab, transform.position,
+                                        Quaternion.LookRotation(dir), transform);
+
+            // Dynamically add the tracker so it continuously re-aims at the target.
+            var tracker = go.AddComponent<SCRIPT_LoopLaserTracker>();
+            tracker.target = all[best].transform;
+
+            var ps = go.GetComponentInChildren<ParticleSystem>();
+            if (ps != null) ps.Play(withChildren: true);
+
+            _loopLasers.Add(go);
+            fired++;
+        }
+    }
+
+    void StopLoopLasers()
+    {
+        foreach (var go in _loopLasers)
+        {
+            if (go == null) continue;
+            var ps = go.GetComponentInChildren<ParticleSystem>();
+            if (ps != null)
+                ps.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            Destroy(go);
+        }
+        _loopLasers.Clear();
     }
 
     // ── health ─────────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Global entry point for anything that wants to hurt the player.
-    /// Enemies, hazards, etc. — call this and nothing else.
-    /// </summary>
     public void TakeDamage(float amount)
     {
         if (!IsAlive || IsDashing) return;
-
         _currentHealth = Mathf.Max(0f, _currentHealth - amount);
-
-        if (_currentHealth <= 0f)
-            OnDeath();
+        if (_currentHealth <= 0f) OnDeath();
     }
 
     void CheckDashKill()
@@ -579,16 +783,11 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     protected virtual void OnDeath()
     {
-        // Hook for game-over logic — replace or extend as the project grows.
         Debug.Log("[Player] Died!");
     }
 
     void UpdatePostProcessing()
     {
-        // dashT: 0 = cruising at flightSpeed, 1 = fully dashing at dashSpeed.
-        // Uses currentSpeed so it follows the same ramp as movement — no separate timer.
-        // During a burst (currentSpeed > dashSpeed), InverseLerp > 1 but Lerp clamps,
-        // so the effect simply stays at full dash intensity. No extra code needed.
         float dashT = Mathf.InverseLerp(flightSpeed, dashSpeed, currentSpeed);
         float t     = 1f - Mathf.Exp(-ppBlendSpeed * Time.deltaTime);
 
