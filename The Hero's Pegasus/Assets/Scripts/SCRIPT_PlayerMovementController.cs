@@ -78,6 +78,15 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float flipCooldownSeconds  = 2.0f;
     public GameObject flipParticles;
 
+
+
+    [Header("HUD")]
+    [Tooltip("Health points. Player is killed when it reaches 0.")]
+    public float health = 1000f;
+
+    public SCRIPT_StaminaBar staminaBar;
+
+
     // ── private state ──────────────────────────────────────────────────────────
     private Rigidbody rb;
 
@@ -164,6 +173,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             flipParticles.SetActive(false);
         }
 
+        staminaBar = GetComponentInChildren<SCRIPT_StaminaBar>();
+
         InitPostProcessing();
     }
 
@@ -205,12 +216,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
         if (dashParticles != null)
         {
-            if (Mouse.current.rightButton.wasPressedThisFrame)
+            if (Mouse.current.rightButton.wasPressedThisFrame || (Mouse.current.rightButton.isPressed && staminaBar.IsFull()))  
             {
                 dashParticles.SetActive(true);
                 if (dashPs != null) dashPs.Play(withChildren: true);
             }
-            else if (Mouse.current.rightButton.wasReleasedThisFrame)
+            else if (Mouse.current.rightButton.wasReleasedThisFrame || !staminaBar.CanDash())
             {
                 if (dashPs != null) dashPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 dashParticles.SetActive(false);
@@ -358,9 +369,15 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         pendingMouseDelta     = Vector2.zero;
 
         // ── dash: ramp currentSpeed toward target ──────────────────────────────
-        bool  dashing     = Mouse.current.rightButton.isPressed;
+        bool  dashing     = Mouse.current.rightButton.isPressed && staminaBar.CanDash();
         float targetSpeed = dashing ? dashSpeed : flightSpeed;
         float ramp        = dashing ? dashRampUp : dashRampDown;
+
+        if (dashing)
+            staminaBar.UseStamina();
+        else 
+            staminaBar.RegenStamina();
+
 
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed,
                                   1f - Mathf.Exp(-ramp * Time.fixedDeltaTime));
