@@ -1,10 +1,21 @@
 using UnityEngine;
 
 /// <summary>
-/// Controls the hero sitting on top of the pegasus. Independently rotates to face
-/// the nearest enemy and fires arrow projectiles with predictive lead targeting:
-/// the hero solves for the intercept point by accounting for the enemy's velocity
-/// and its own (the pegasus's) velocity so arrows lead the target correctly.
+/// Controls the hero sitting on top of the pegasus.
+///
+/// ROTATION:
+///   The hero root always matches the pegasus orientation so the lower body stays
+///   seated correctly. If an upperBodyBone is assigned, that bone is rotated in
+///   LateUpdate to independently aim at the nearest enemy. If no upper-body bone
+///   is set the whole hero rotates toward the target (legacy behaviour).
+///
+/// ANIMATION:
+///   If a heroAnimator is assigned the script drives a bow-attack state machine:
+///     DoAttack (trigger) → BowDraw → BowAim → BowFire
+///   The arrow spawns when the BowFire state reaches arrowFireNormalizedTime (0.75).
+///   heroAnimator.SetFloat("AttackSpeed", fireRate / referenceFireRate) keeps the
+///   animation speed in sync with the actual fire rate.
+///   Without an animator the legacy timer-based arrow spawn is used instead.
 /// </summary>
 public class SCRIPT_Hero : MonoBehaviour
 {
@@ -21,7 +32,7 @@ public class SCRIPT_Hero : MonoBehaviour
     public float aimOffsetDegrees = 3f;
 
     [Header("Rotation")]
-    [Tooltip("How fast the hero rotates to face the lead-aim direction, in degrees per second.")]
+    [Tooltip("Degrees per second the hero (or upper-body bone) rotates toward the aim direction.")]
     public float rotationSpeed = 270f;
 
     [Header("References")]
@@ -30,11 +41,51 @@ public class SCRIPT_Hero : MonoBehaviour
     [Tooltip("Pegasus / player transform. Auto-finds the 'Player' tag if empty.")]
     public Transform pegasus;
 
+    [Header("Animation")]
+    [Tooltip("Animator on the hero model. Leave null to use timer-based firing instead.")]
+    public Animator heroAnimator;
+    [Tooltip("Spine or chest bone to rotate for upper-body aiming. " +
+             "Leave null to rotate the whole hero toward the target.")]
+    public Transform upperBodyBone;
+    [Tooltip("Normalized time (0–1) within the BowFire state at which the arrow actually spawns.")]
+    [Range(0f, 1f)]
+    public float arrowFireNormalizedTime = 0.75f;
+    [Tooltip("Names of each Animator fire state (one per clip variation). " +
+             "A random one is selected each shot. e.g. BowFire_01, BowFire_02, BowFire_03")]
+    public string[] fireStateNames = { "BowFire_01", "BowFire_02", "BowFire_03" };
+    [Tooltip("Animator layer index to monitor for attack states.")]
+    public int animatorLayer = 1;
+    [Tooltip("Fire rate at which the attack animations were authored. " +
+             "AttackSpeed = fireRate / referenceFireRate is sent to the Animator each frame.")]
+    public float referenceFireRate = 1f;
+    [Tooltip("Name of the Animator trigger that kicks off an attack cycle.")]
+    public string attackTriggerName = "DoAttack";
+    [Tooltip("Name of the Animator int parameter that selects which fire variation plays (0, 1, 2…).")]
+    public string attackVariantParam = "AttackVariant";
+    [Tooltip("Name of the Animator float parameter used to scale animation speed.")]
+    public string attackSpeedParam = "AttackSpeed";
+
+    [Header("Upper-Body Aim")]
+    [Tooltip("Maximum left/right swivel from the bind pose (degrees).")]
+    public float upperBodyYawLimit = 70f;
+    [Tooltip("Maximum upward swivel from the bind pose (degrees).")]
+    public float upperBodyPitchUpLimit = 45f;
+    [Tooltip("Maximum downward swivel from the bind pose (degrees).")]
+    public float upperBodyPitchDownLimit = 35f;
+    [Tooltip("How quickly the upper body approaches the target pose. Higher = snappier.")]
+    public float upperBodyAimSmoothing = 14f;
+
     // ── private state ──────────────────────────────────────────────────────────
 
-    private float   _fireCooldown;
-    private Vector3 _prevPosition;
-    private Vector3 _heroVelocity;
+    private float            _fireCooldown;
+    private Vector3          _prevPosition;
+    private Vector3          _heroVelocity;
+    private SCRIPT_EnemyBase _currentTarget;
+    private Vector3          _currentAimDir;
+    private bool             _arrowFiredThisCycle;
+    private bool             _upperBodyAimInitialized;
+    private Quaternion       _upperBodyBaseLocalRotation;
+    private Quaternion       _upperBodySmoothedLocalRotation;
 
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -52,43 +103,178 @@ public class SCRIPT_Hero : MonoBehaviour
         if (firePoint == null)
             firePoint = transform;
 
-        _prevPosition = transform.position;
+        _prevPosition  = transform.position;
+        _currentAimDir = transform.forward;
+
+        InitializeUpperBodyAim();
     }
 
     void Update()
     {
-        // Kinematic Rigidbodies don't expose meaningful velocity via rb.velocity,
-        // so we diff world positions each frame instead.
+        // Kinematic Rigidbodies don't expose meaningful rb.velocity so we diff positions.
         _heroVelocity = (transform.position - _prevPosition) / Mathf.Max(Time.deltaTime, 0.0001f);
         _prevPosition = transform.position;
 
         _fireCooldown -= Time.deltaTime;
 
-        SCRIPT_EnemyBase target = FindNearestEnemy();
-        if (target == null) return;
+        _currentTarget = FindNearestEnemy();
+        if (_currentTarget != null)
+            _currentAimDir = ComputeLeadAim(_currentTarget);
 
-        Vector3 aimDir = ComputeLeadAim(target);
-
-        // Rotate hero in world space (independent of the parent pegasus's rotation).
-        transform.rotation = Quaternion.RotateTowards(
-            transform.rotation,
-            Quaternion.LookRotation(aimDir),
-            rotationSpeed * Time.deltaTime);
-
-        if (_fireCooldown <= 0f && arrowPrefab != null)
+        // ── Root rotation ──────────────────────────────────────────────────────
+        if (upperBodyBone != null && pegasus != null)
         {
-            FireArrow(aimDir);
+            // Lower body locked to the pegasus — legs stay seated correctly.
+            // Upper-body aiming happens in LateUpdate via the bone.
+            transform.rotation = pegasus.rotation;
+        }
+        else
+        {
+            // No split: rotate the whole hero toward the aim direction (legacy).
+            if (_currentTarget != null)
+            {
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    Quaternion.LookRotation(_currentAimDir),
+                    rotationSpeed * Time.deltaTime);
+            }
+            else if (pegasus != null)
+            {
+                // Drift back to match the pegasus when there is no target.
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    pegasus.rotation,
+                    rotationSpeed * Time.deltaTime);
+            }
+        }
+
+        // ── Attack ─────────────────────────────────────────────────────────────
+        if (_currentTarget == null) return;
+
+        if (heroAnimator != null)
+            UpdateAnimatedAttack();
+        else
+            UpdateDirectAttack();
+    }
+
+    void LateUpdate()
+    {
+        // This runs after animation writes its pose, so this always wins for aiming.
+        if (upperBodyBone == null) return;
+        if (!_upperBodyAimInitialized) InitializeUpperBodyAim();
+
+        Quaternion desiredLocal = _upperBodyBaseLocalRotation;
+
+        if (_currentTarget != null)
+        {
+            Transform parent = upperBodyBone.parent != null ? upperBodyBone.parent : transform;
+            Vector3 localAimDir = parent.InverseTransformDirection(_currentAimDir);
+            if (localAimDir.sqrMagnitude > 0.0001f)
+                desiredLocal = ComputeClampedUpperBodyLocalRotation(localAimDir.normalized);
+        }
+
+        float t = upperBodyAimSmoothing > 0f
+            ? 1f - Mathf.Exp(-upperBodyAimSmoothing * Time.deltaTime)
+            : 1f;
+
+        _upperBodySmoothedLocalRotation = Quaternion.Slerp(
+            _upperBodySmoothedLocalRotation,
+            desiredLocal,
+            t);
+        upperBodyBone.localRotation = _upperBodySmoothedLocalRotation;
+    }
+
+    void InitializeUpperBodyAim()
+    {
+        if (upperBodyBone == null) return;
+        _upperBodyBaseLocalRotation = upperBodyBone.localRotation;
+        _upperBodySmoothedLocalRotation = _upperBodyBaseLocalRotation;
+        _upperBodyAimInitialized = true;
+    }
+
+    Quaternion ComputeClampedUpperBodyLocalRotation(Vector3 localAimDir)
+    {
+        Vector3 baseForward = _upperBodyBaseLocalRotation * Vector3.forward;
+        Vector3 baseUp = _upperBodyBaseLocalRotation * Vector3.up;
+        Vector3 baseRight = _upperBodyBaseLocalRotation * Vector3.right;
+
+        Vector3 yawFrom = Vector3.ProjectOnPlane(baseForward, baseUp);
+        Vector3 yawTo = Vector3.ProjectOnPlane(localAimDir, baseUp);
+        if (yawFrom.sqrMagnitude < 0.0001f || yawTo.sqrMagnitude < 0.0001f)
+            yawTo = yawFrom;
+
+        float yaw = Vector3.SignedAngle(yawFrom, yawTo, baseUp);
+        yaw = Mathf.Clamp(yaw, -upperBodyYawLimit, upperBodyYawLimit);
+
+        Quaternion yawRot = Quaternion.AngleAxis(yaw, baseUp);
+        Vector3 yawedForward = yawRot * baseForward;
+
+        Vector3 pitchFrom = Vector3.ProjectOnPlane(yawedForward, baseRight);
+        Vector3 pitchTo = Vector3.ProjectOnPlane(localAimDir, baseRight);
+        if (pitchFrom.sqrMagnitude < 0.0001f || pitchTo.sqrMagnitude < 0.0001f)
+            pitchTo = pitchFrom;
+
+        float pitch = Vector3.SignedAngle(pitchFrom, pitchTo, baseRight);
+        pitch = Mathf.Clamp(pitch, -upperBodyPitchDownLimit, upperBodyPitchUpLimit);
+
+        Quaternion pitchRot = Quaternion.AngleAxis(pitch, baseRight);
+        return pitchRot * yawRot * _upperBodyBaseLocalRotation;
+    }
+
+    // ── Animation-driven attack ────────────────────────────────────────────────
+
+    void UpdateAnimatedAttack()
+    {
+        // Keep animation speed proportional to the desired fire rate.
+        heroAnimator.SetFloat(attackSpeedParam, fireRate / Mathf.Max(referenceFireRate, 0.01f));
+
+        // Check if any fire variation state has reached the arrow-release point.
+        AnimatorStateInfo state = heroAnimator.GetCurrentAnimatorStateInfo(animatorLayer);
+        if (!_arrowFiredThisCycle && state.normalizedTime >= arrowFireNormalizedTime
+            && IsInFireState(state))
+        {
+            FireArrow(_currentAimDir);
+            _arrowFiredThisCycle = true;
+        }
+
+        // Trigger a new attack cycle at the configured fire rate.
+        // Pick a random variation, then set the trigger.
+        // Resetting _arrowFiredThisCycle here clears it for the incoming cycle.
+        if (_fireCooldown <= 0f && arrowPrefab != null && fireStateNames.Length > 0)
+        {
+            int variant = Random.Range(0, fireStateNames.Length);
+            heroAnimator.SetInteger(attackVariantParam, variant);
+            heroAnimator.SetTrigger(attackTriggerName);
+            _arrowFiredThisCycle = false;
             _fireCooldown = 1f / Mathf.Max(fireRate, 0.01f);
         }
     }
 
-    // ── targeting ──────────────────────────────────────────────────────────────
+    bool IsInFireState(AnimatorStateInfo state)
+    {
+        foreach (string name in fireStateNames)
+            if (state.IsName(name)) return true;
+        return false;
+    }
+
+    // ── Timer-driven attack (no animator) ─────────────────────────────────────
+
+    void UpdateDirectAttack()
+    {
+        if (_fireCooldown <= 0f && arrowPrefab != null)
+        {
+            FireArrow(_currentAimDir);
+            _fireCooldown = 1f / Mathf.Max(fireRate, 0.01f);
+        }
+    }
+
+    // ── Targeting ─────────────────────────────────────────────────────────────
 
     SCRIPT_EnemyBase FindNearestEnemy()
     {
         SCRIPT_EnemyBase[] enemies = FindObjectsByType<SCRIPT_EnemyBase>(FindObjectsSortMode.None);
 
-        float minSqr            = Mathf.Infinity;
+        float minSqr             = Mathf.Infinity;
         SCRIPT_EnemyBase nearest = null;
 
         foreach (SCRIPT_EnemyBase e in enemies)
@@ -104,27 +290,21 @@ public class SCRIPT_Hero : MonoBehaviour
     {
         Vector3 d = target.transform.position - firePoint.position;
 
-        // Enemy velocity: SCRIPT_EnemyBase always drives movement as
-        //   rb.MovePosition(pos + transform.forward * flightSpeed * dt)
-        // so forward * flightSpeed IS the enemy's actual world-space velocity.
+        // Enemy velocity: SCRIPT_EnemyBase drives movement via rb.MovePosition so
+        // forward * flightSpeed is the actual world-space velocity.
         Vector3 targetVel = target.transform.forward * target.flightSpeed;
 
-        // Treat arrow speed as relative to the hero (we'll add _heroVelocity back
-        // in FireArrow so the arrow inherits the platform velocity). That means the
-        // intercept equation uses the relative velocity between target and hero.
+        // Arrow speed is relative to the hero; add _heroVelocity back in FireArrow.
         Vector3 relVel = targetVel - _heroVelocity;
+        float   t      = SolveInterceptTime(d, relVel, arrowVelocity);
 
-        float t = SolveInterceptTime(d, relVel, arrowVelocity);
-
-        // (d + relVel*t) is the aim offset in the hero's reference frame.
-        // Normalised it gives the direction to fire (in hero-local terms).
         return t > 0f ? (d + relVel * t).normalized : d.normalized;
     }
 
     /// <summary>
-    /// Smallest positive time t at which a projectile travelling at <paramref name="speed"/>
-    /// (relative) can reach an object at offset <paramref name="d"/> moving at
-    /// relative velocity <paramref name="vel"/>. Returns -1 if no valid solution.
+    /// Smallest positive time t at which a projectile at speed <paramref name="speed"/>
+    /// (relative) can reach an object at offset <paramref name="d"/> moving at relative
+    /// velocity <paramref name="vel"/>. Returns -1 if no valid solution exists.
     /// </summary>
     static float SolveInterceptTime(Vector3 d, Vector3 vel, float speed)
     {
@@ -133,7 +313,6 @@ public class SCRIPT_Hero : MonoBehaviour
         float b = 2f * Vector3.Dot(d, vel);
         float c = d.sqrMagnitude;
 
-        // Degenerate: relative speed ≈ arrow speed — solve linearly.
         if (Mathf.Abs(a) < 0.0001f)
         {
             if (Mathf.Abs(b) < 0.0001f) return -1f;
@@ -145,8 +324,8 @@ public class SCRIPT_Hero : MonoBehaviour
         if (disc < 0f) return -1f;
 
         float sq = Mathf.Sqrt(disc);
-        float t1 = (-b - sq) / (2f * a);
-        float t2 = (-b + sq) / (2f * a);
+        float t1  = (-b - sq) / (2f * a);
+        float t2  = (-b + sq) / (2f * a);
 
         if (t1 > 0f && t2 > 0f) return Mathf.Min(t1, t2);
         if (t1 > 0f)             return t1;
@@ -154,22 +333,19 @@ public class SCRIPT_Hero : MonoBehaviour
         return -1f;
     }
 
-    // ── firing ─────────────────────────────────────────────────────────────────
+    // ── Firing ─────────────────────────────────────────────────────────────────
 
     void FireArrow(Vector3 baseDir)
     {
-        // Apply spread in the arrow's LOCAL frame (relative to its travel direction)
-        // so the cone is symmetric regardless of the aim angle.
-        float yaw   = Random.Range(-aimOffsetDegrees, aimOffsetDegrees);
-        float pitch = Random.Range(-aimOffsetDegrees, aimOffsetDegrees);
+        float   yaw    = Random.Range(-aimOffsetDegrees, aimOffsetDegrees);
+        float   pitch  = Random.Range(-aimOffsetDegrees, aimOffsetDegrees);
         Vector3 aimDir = Quaternion.LookRotation(baseDir)
                        * Quaternion.Euler(pitch, yaw, 0f)
                        * Vector3.forward;
 
-        GameObject obj   = Instantiate(arrowPrefab, firePoint.position, Quaternion.LookRotation(aimDir));
+        GameObject   obj   = Instantiate(arrowPrefab, firePoint.position, Quaternion.LookRotation(aimDir));
         SCRIPT_Arrow arrow = obj.GetComponent<SCRIPT_Arrow>();
         if (arrow != null)
-            // Pass hero velocity so the arrow's world-space launch matches the lead prediction.
             arrow.Init(arrowDamage, arrowVelocity, _heroVelocity);
     }
 }
