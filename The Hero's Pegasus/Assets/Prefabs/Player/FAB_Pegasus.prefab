@@ -180,14 +180,11 @@ MonoBehaviour:
   loopFireRange: 200
   loopMaxTargets: 6
   loopLaserPrefab: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
-  walkSpeed: 30
-  landingTransitionSpeed: 3
-  standoffDistance: 1.2
-  surfaceCheckDistance: 4
   islandLayerMask:
     serializedVersion: 2
     m_Bits: 128
-  landingSphereRadius: 1
+  islandBounceCheckRadius: 1
+  islandBounceDamping: 0.65
   deathScreenDelay: 2
   deathDebrisCount: 24
   deathExplosionForce: 8
@@ -1501,8 +1498,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1630651251188942246}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.029462047, y: 0.072405, z: 0.9965191, w: -0.028969493}
-  m_LocalPosition: {x: 0.023657262, y: -0.0011948779, z: 0.099690914}
+  m_LocalRotation: {x: -0.327851, y: 0.060337614, z: 0.94150513, w: -0.04940734}
+  m_LocalPosition: {x: 0.02362531, y: -0.0011977484, z: 0.0996819}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1510,7 +1507,7 @@ Transform:
   - {fileID: 7921984146536560809}
   - {fileID: 2927571141664617724}
   m_Father: {fileID: 6864980678418066493}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -4.659, y: -38.71, z: -172.355}
 --- !u!1 &1660211583964754387
 GameObject:
   m_ObjectHideFlags: 0
@@ -2162,8 +2159,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2368333948225283685}
   serializedVersion: 2
-  m_LocalRotation: {x: -2.8600127e-17, y: 1.8718442e-17, z: 0.04366162, w: 0.9990464}
-  m_LocalPosition: {x: -0.4334126, y: 0.0000000033951217, z: -5.02078e-10}
+  m_LocalRotation: {x: 0.014536327, y: -0.33261147, z: 0.041170843, w: 0.94205266}
+  m_LocalPosition: {x: -0.43342248, y: 0.0000020116568, z: 0.0000096187}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2171,7 +2168,7 @@ Transform:
   - {fileID: 6058691490385676021}
   - {fileID: 4514242926235254857}
   m_Father: {fileID: 114612996508290093}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 3.14, y: -38.786, z: 3.899}
 --- !u!1 &2384947788961833839
 GameObject:
   m_ObjectHideFlags: 0
@@ -2582,8 +2579,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3077448116562844001}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.072405, y: 0.029462047, z: 0.028969493, w: 0.9965191}
-  m_LocalPosition: {x: 0.023657111, y: -0.0011004376, z: -0.099692024}
+  m_LocalRotation: {x: 0.062880464, y: 0.27730545, z: 0.046127785, w: 0.95761156}
+  m_LocalPosition: {x: 0.023629582, y: -0.0011032317, z: -0.09968553}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2591,7 +2588,7 @@ Transform:
   - {fileID: 8187449580444626253}
   - {fileID: 219614256269842409}
   m_Father: {fileID: 6864980678418066493}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 5.443, y: 32.638, z: 7.11}
 --- !u!1 &3163173124449448641
 GameObject:
   m_ObjectHideFlags: 0
@@ -2907,7 +2904,7 @@ Transform:
   m_GameObject: {fileID: 3680405903657527598}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalPosition: {x: -0, y: 0, z: 0.927}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3235,6 +3232,18 @@ MonoBehaviour:
   rotationSpeed: 270
   firePoint: {fileID: 1090287280247317436}
   pegasus: {fileID: 3486943141806365876}
+  heroAnimator: {fileID: 0}
+  upperBodyBone: {fileID: 0}
+  arrowFireNormalizedTime: 0.75
+  fireStateNames:
+  - BowFire_01
+  - BowFire_02
+  - BowFire_03
+  animatorLayer: 1
+  referenceFireRate: 1
+  attackTriggerName: DoAttack
+  attackVariantParam: AttackVariant
+  attackSpeedParam: AttackSpeed
 --- !u!1 &4216640242669403269
 GameObject:
   m_ObjectHideFlags: 0
@@ -4466,8 +4475,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6678381709356014946}
   serializedVersion: 2
-  m_LocalRotation: {x: -2.37225e-13, y: -4.1340018e-10, z: 0.043661624, w: 0.9990464}
-  m_LocalPosition: {x: 0.4334131, y: -0.0000000012538826, z: 1.8542888e-10}
+  m_LocalRotation: {x: 0.011816722, y: -0.27038562, z: 0.042032205, w: 0.9617616}
+  m_LocalPosition: {x: 0.43341124, y: -0.000000037252903, z: -0.0000011883676}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4475,7 +4484,7 @@ Transform:
   - {fileID: 7502876423482528315}
   - {fileID: 5156905850951521743}
   m_Father: {fileID: 3400041280817715933}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 2.606, y: -31.308, z: 4.275}
 --- !u!1 &6683572988017958700
 GameObject:
   m_ObjectHideFlags: 0
@@ -5929,8 +5938,6 @@ MonoBehaviour:
   bankFlapSpeed: 1.6
   diveFlapSpeed: 0.8
   blendSmoothing: 4
-  landedParam: IsLanded
-  landedFlapBlend: 0.2
 --- !u!1 &8503101802370469997
 GameObject:
   m_ObjectHideFlags: 0
@@ -5974,7 +5981,7 @@ GameObject:
   - component: {fileID: 2137803609716531676}
   - component: {fileID: 5092235631810446032}
   m_Layer: 0
-  m_Name: 9CG_Archer
+  m_Name: Hero
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5989,7 +5996,7 @@ Transform:
   m_GameObject: {fileID: 8533690113704618533}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 208.07935, y: 0, z: -113.479576}
+  m_LocalPosition: {x: 0, y: 0.734, z: 0.208}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6008,7 +6015,7 @@ Animator:
   m_GameObject: {fileID: 8533690113704618533}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 68a07c5b861c6a1478b11767157efa1b, type: 3}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: c23f20bf890a9ca4f81aeeb6677e8379, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -6040,6 +6047,18 @@ MonoBehaviour:
   rotationSpeed: 270
   firePoint: {fileID: 4882338019501128376}
   pegasus: {fileID: 3486943141806365876}
+  heroAnimator: {fileID: 2137803609716531676}
+  upperBodyBone: {fileID: 1282885592251062566}
+  arrowFireNormalizedTime: 0.75
+  fireStateNames:
+  - Combo_Attack_01_01
+  - Combo_Attack_01_02
+  - Combo_Attack_01_03
+  animatorLayer: 1
+  referenceFireRate: 1
+  attackTriggerName: DoAttack
+  attackVariantParam: AttackVariant
+  attackSpeedParam: AttackSpeed
 --- !u!1 &8543849386304585076
 GameObject:
   m_ObjectHideFlags: 0
