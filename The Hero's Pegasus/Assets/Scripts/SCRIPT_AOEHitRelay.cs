@@ -27,12 +27,19 @@ public class SCRIPT_AOEHitRelay : MonoBehaviour
 
     void OnParticleCollision(GameObject other)
     {
+        Debug.Log($"[AOEHitRelay] OnParticleCollision hit: {other.name}  playerHealth={(playerHealth != null ? "set" : "NULL")}");
+
         if (playerHealth == null) return;
 
         // Only damage the player — ignore any other colliders.
-        if (other.GetComponentInParent<SCRIPT_PlayerMovementController>() == null) return;
+        if (other.GetComponentInParent<SCRIPT_PlayerMovementController>() == null)
+        {
+            Debug.Log($"[AOEHitRelay] '{other.name}' has no SCRIPT_PlayerMovementController in parent chain — skipped.");
+            return;
+        }
 
         int count = _ps.GetCollisionEvents(other, _events);
+        Debug.Log($"[AOEHitRelay] Dealing {damagePerParticle} damage x{count} events to player.");
         for (int i = 0; i < count; i++)
             playerHealth.TakeDamage(damagePerParticle);
     }

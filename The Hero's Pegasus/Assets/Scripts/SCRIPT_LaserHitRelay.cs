@@ -28,10 +28,16 @@ public class SCRIPT_LaserHitRelay : MonoBehaviour
     void OnParticleCollision(GameObject other)
     {
         SCRIPT_EnemyBase enemy = other.GetComponentInParent<SCRIPT_EnemyBase>();
-        if (enemy == null) return;
+        if (enemy != null)
+        {
+            int count = _ps.GetCollisionEvents(other, _events);
+            for (int i = 0; i < count; i++)
+                enemy.TakeDamage(1f, _events[i].intersection);
+            return;
+        }
 
-        int count = _ps.GetCollisionEvents(other, _events);
-        for (int i = 0; i < count; i++)
-            enemy.TakeDamage(1f, _events[i].intersection);
+        SCRIPT_UpgradePickup upgrade = other.GetComponentInParent<SCRIPT_UpgradePickup>();
+        if (upgrade != null)
+            upgrade.Collect();
     }
 }

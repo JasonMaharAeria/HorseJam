@@ -10,13 +10,20 @@ public class SCRIPT_HealthBar : MonoBehaviour
     [SerializeField] private Gradient gradient;
     [SerializeField] private Image fillImage;
 
+    public float CurrentHealth => slider != null ? slider.value : 0f;
+    public float MaxHealth     => slider != null ? slider.maxValue : 0f;
+    public float HealthFraction =>
+        slider != null && slider.maxValue > 0f ? slider.value / slider.maxValue : 0f;
+
 
     void Update()
     {
         // Handle regeneration
         if (regenerateHealth && slider.value < slider.maxValue)
         {
-            AddHealth(regenerationRate * Time.deltaTime);
+            float regenMult = SCRIPT_PlayerStats.Instance != null
+                            ? SCRIPT_PlayerStats.Instance.HealthRegenMultiplier : 1f;
+            AddHealth(regenerationRate * regenMult * Time.deltaTime);
         }
     }
 
@@ -52,6 +59,17 @@ public class SCRIPT_HealthBar : MonoBehaviour
         }
 
         fillImage.color = gradient.Evaluate(slider.normalizedValue);
+    }
+
+    /// <summary>
+    /// Widens the bar's maximum without resetting current health.
+    /// Sets current to <paramref name="currentHealth"/> so the caller controls
+    /// whether the player gains any HP from the expansion.
+    /// </summary>
+    public void ExpandMax(float newMax, float currentHealth)
+    {
+        slider.maxValue = newMax;
+        SetHealth(currentHealth);
     }
 
     public void SetRegeneration(bool turnOn)

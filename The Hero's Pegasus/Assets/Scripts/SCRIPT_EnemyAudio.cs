@@ -63,6 +63,7 @@ public class SCRIPT_EnemyAudio : MonoBehaviour
         _source.rolloffMode            = AudioRolloffMode.Logarithmic;
         _source.outputAudioMixerGroup  = sfx;
         _source.volume                 = 0f;                           // fade in via Update
+        _source.pitch                  = SCRIPT_AudioManager.RandomPitch(); // subtle per-enemy variation
 
         if (flybyWindClip != null)
             _source.Play();

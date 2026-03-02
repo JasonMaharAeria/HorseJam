@@ -48,7 +48,9 @@ public class SCRIPT_StaminaBar : MonoBehaviour
         // Simple regeneration logic
         if (currentStamina < maxStamina)
         {
-            currentStamina += maxStamina / secondsToRefreshStamina * Time.deltaTime;
+            float regenMult = SCRIPT_PlayerStats.Instance != null
+                            ? SCRIPT_PlayerStats.Instance.StaminaRegenMultiplier : 1f;
+            currentStamina += maxStamina / secondsToRefreshStamina * regenMult * Time.deltaTime;
         }
         else
         {
@@ -68,6 +70,19 @@ public class SCRIPT_StaminaBar : MonoBehaviour
     public bool IsFull()
     {
         return currentStamina == maxStamina;
+    }
+
+    /// <summary>
+    /// Called by SCRIPT_PlayerStats when a MaxStaminaIncrease upgrade is collected.
+    /// Scales maxStamina by <paramref name="multiplier"/> and refills the player by the gained amount.
+    /// </summary>
+    public void IncreaseMaxStamina(float multiplier)
+    {
+        float gained   = maxStamina * (multiplier - 1f);
+        maxStamina    *= multiplier;
+        currentStamina = Mathf.Min(currentStamina + gained, maxStamina);
+        staminaSlider.maxValue = maxStamina;
+        staminaSlider.value    = currentStamina;
     }
 
     /// <summary>Stamina as a 0–1 fraction. Used by SCRIPT_PlayerAudio to modulate dash pitch.</summary>

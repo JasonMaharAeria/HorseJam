@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Audio;
 using UnityEngine.Rendering;           // Volume
 using UnityEngine.Rendering.Universal; // LensDistortion, Vignette  (requires URP)
 
@@ -12,10 +13,14 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float flightSpeed = 20f;
 
     [Header("Dash")]
-    public float      dashSpeed      = 60f;
-    public float      dashRampUp     = 8f;
-    public float      dashRampDown   = 3f;
+    public float      dashSpeed          = 60f;
+    public float      dashRampUp         = 8f;
+    public float      dashRampDown       = 3f;
     public GameObject dashParticles;
+    [Tooltip("Maximum extra speed added when dash is held continuously (resets on release).")]
+    public float      dashHoldSpeedBonus = 5f;
+    [Tooltip("Seconds of continuous dash holding to ramp from 0 to the full speed bonus.")]
+    public float      dashHoldRampTime   = 3f;
 
     [Header("Gravity Influence")]
     [Tooltip("Extra speed added when flying straight down (scales with how directly downward you point)")]
@@ -67,16 +72,18 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public float maxHealth = 100f;
     [SerializeField] private float _currentHealth;
 
-    /// <summary>Current health, read-only from outside.</summary>
-    public float CurrentHealth => _currentHealth;
-    public bool  IsAlive       => _currentHealth > 0f;
+    /// <summary>Current health, read-only from outside. Reads the health bar when available so regen is reflected.</summary>
+    public float CurrentHealth => healthBar != null ? healthBar.CurrentHealth : _currentHealth;
+    public bool  IsAlive       => CurrentHealth > 0f;
 
     [Header("Dash Attack")]
     [Tooltip("Enemies within this radius are instantly destroyed while dashing or bursting.")]
     public float dashKillRadius = 3f;
 
     /// <summary>True while RMB dash is held or the post-flip burst is active.</summary>
-    public bool IsDashing { get; private set; }
+    public bool  IsDashing    { get; private set; }
+    /// <summary>Seconds the dash button has been held continuously this press (resets to 0 on release).</summary>
+    public float DashHoldTime { get; private set; }
 
     [Header("Circle Flip — Maneuver")]
     [Tooltip("Seconds for phase 1: vertical inversion to upside-down")]
@@ -107,6 +114,19 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     [Tooltip("Seconds before another loop can trigger after one completes.")]
     public float loopCooldownSeconds = 4f;
 
+    [Header("Pause — Downward Flick Detection")]
+    [Tooltip("Minimum mouse speed (px/s) for a frame to count toward the downward flick that opens the pause menu.")]
+    public float pauseFlickMinSpeed = 500f;
+    [Tooltip("Time window (seconds) over which the downward displacement is accumulated.")]
+    public float pauseFlickWindow = 0.1f;
+    [Tooltip("Total downward pixel displacement required within the window to trigger the pause.")]
+    public float pauseFlickMinDisplacement = 60f;
+    [Tooltip("The downward (negative Y) component must be at least this fraction of the total delta magnitude.")]
+    [Range(0f, 1f)]
+    public float pauseFlickMinVerticalFraction = 0.7f;
+    [Tooltip("Seconds before the downward flick can trigger pause again after it fires.")]
+    public float pauseFlickCooldown = 1f;
+
     [Header("Vertical Loop — Maneuver")]
     [Tooltip("Radius of the loop circle in world units.")]
     public float loopRadius = 15f;
@@ -122,6 +142,11 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     [Tooltip("Laser particle prefab instantiated per locked target when loop lock-on begins. Parented to the player " +
              "and continuously rotated to track its assigned enemy. Should have SCRIPT_LaserHitRelay.")]
     public GameObject loopLaserPrefab;
+    [Header("Vertical Loop — Laser Audio")]
+    [Tooltip("Pitch at loop-laser start and end.")]
+    [Min(0.01f)] public float loopLaserBasePitch = 1f;
+    [Tooltip("Pitch reached halfway through loop-laser firing.")]
+    [Min(0.01f)] public float loopLaserPeakPitch = 1.2f;
 
     [Header("Island Collision")]
     [Tooltip("Physics layer(s) that island colliders live on. Leave at zero to detect all default layers.")]
@@ -147,7 +172,18 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
              "If left empty a default Unity cube primitive is used as a fallback.")]
     public GameObject deathDebrisPrefab;
 
+    [Header("Startup")]
+    [Tooltip("If true, all player input and movement are frozen until StartGame() is called. Use with SCRIPT_TitleScreen.")]
+    public bool startFrozen = false;
+
+    // ── computed ───────────────────────────────────────────────────────────────
+
+    // Inspector dashSpeed scaled by any DashSpeedIncrease upgrades collected so far.
+    float EffectiveDashSpeed => dashSpeed *
+        (SCRIPT_PlayerStats.Instance != null ? SCRIPT_PlayerStats.Instance.DashSpeedMultiplier : 1f);
+
     // ── private state ──────────────────────────────────────────────────────────
+    private bool _gameStarted;
     //HUD
     private SCRIPT_HealthBar healthBar;
     private SCRIPT_StaminaBar staminaBar;
@@ -187,6 +223,11 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     private float _loopFlickAccumY;
     private float _loopFlickWindowTimer;
 
+    // ── pause flick gesture detection ─────────────────────────────────────────
+    private float _pauseFlickAccumY;
+    private float _pauseFlickWindowTimer;
+    private float _pauseFlickCooldownRemaining;
+
     // ── flip state machine ─────────────────────────────────────────────────────
     private enum FlipState
     {
@@ -221,6 +262,13 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
     public Vector3 LoopEntryRight   { get; private set; }
 
     private readonly List<GameObject> _loopLasers = new();
+    private SCRIPT_LaserController _laserController;
+    private AudioSource       _loopLaserAudioSource;
+    private SCRIPT_PlayerAudio _playerAudio;
+    private bool  _loopLaserAudioPlaying;
+    private float _loopLaserAudioTimer;
+    private float _loopLaserAudioDuration;
+    private float _loopLaserPitchOffset;
 
     // Reusable buffer for dash-kill overlap checks.
     private readonly Collider[] _dashKillBuffer = new Collider[32];
@@ -235,6 +283,7 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void Awake()
     {
+        _playerAudio = GetComponent<SCRIPT_PlayerAudio>();
         rb = GetComponent<Rigidbody>();
         rb.isKinematic   = true;
         rb.useGravity    = false;
@@ -250,8 +299,12 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        if (!startFrozen)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible   = false;
+            _gameStarted     = true;
+        }
 
         if (dashParticles != null)
         {
@@ -270,7 +323,17 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         healthBar.SetRegeneration(true);
 
         staminaBar = FindFirstObjectByType<SCRIPT_StaminaBar>();
+        InitLoopLaserAudio();
         InitPostProcessing();
+    }
+
+    /// <summary>Called by SCRIPT_TitleScreen when the player presses Play. Unlocks the cursor and enables input.</summary>
+    public void StartGame()
+    {
+        if (_gameStarted) return;
+        _gameStarted     = true;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
     }
 
     void InitPostProcessing()
@@ -297,33 +360,66 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         }
     }
 
+    void InitLoopLaserAudio()
+    {
+        _laserController = GetComponent<SCRIPT_LaserController>();
+        if (_laserController == null || _laserController.laserSFX == null) return;
+
+        AudioMixerGroup sfxGroup = SCRIPT_AudioManager.Instance != null
+                                       ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+
+        _loopLaserAudioSource = gameObject.AddComponent<AudioSource>();
+        _loopLaserAudioSource.clip = _laserController.laserSFX;
+        _loopLaserAudioSource.outputAudioMixerGroup = sfxGroup;
+        _loopLaserAudioSource.loop = true;
+        _loopLaserAudioSource.playOnAwake = false;
+        _loopLaserAudioSource.spatialBlend = 0f;
+        _loopLaserAudioSource.volume = 0f;
+        _loopLaserAudioSource.pitch = loopLaserBasePitch;
+    }
+
+    void UpdateLoopLaserAudioPitch()
+    {
+        if (!_loopLaserAudioPlaying || _loopLaserAudioSource == null) return;
+
+        _loopLaserAudioTimer += Time.deltaTime;
+        float t = Mathf.Clamp01(_loopLaserAudioTimer / Mathf.Max(_loopLaserAudioDuration, 0.001f));
+        float riseFall = 1f - Mathf.Abs(2f * t - 1f); // 0 -> 1 -> 0
+        _loopLaserAudioSource.pitch = Mathf.Lerp(loopLaserBasePitch, loopLaserPeakPitch, riseFall) + _loopLaserPitchOffset;
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
 
     void Update()
     {
-        Vector2 rawDelta = Mouse.current.delta.ReadValue();
-
-        UpdateGestureDetection(rawDelta, Time.deltaTime);
-        UpdateLoopFlickDetection(rawDelta, Time.deltaTime);
-
-        pendingMouseDelta += rawDelta;
-
-        if (dashParticles != null)
+        if (_gameStarted)
         {
-            if (Mouse.current.rightButton.wasPressedThisFrame ||
-               (Mouse.current.rightButton.isPressed && staminaBar.IsFull()))
+            Vector2 rawDelta = Mouse.current.delta.ReadValue();
+
+            UpdateGestureDetection(rawDelta, Time.deltaTime);
+            UpdateLoopFlickDetection(rawDelta, Time.deltaTime);
+            UpdatePauseFlickDetection(rawDelta, Time.deltaTime);
+
+            pendingMouseDelta += rawDelta;
+
+            if (dashParticles != null)
             {
-                dashParticles.SetActive(true);
-                if (dashPs != null) dashPs.Play(withChildren: true);
-            }
-            else if (Mouse.current.rightButton.wasReleasedThisFrame || !staminaBar.CanDash())
-            {
-                if (dashPs != null) dashPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                dashParticles.SetActive(false);
+                if (Mouse.current.rightButton.wasPressedThisFrame ||
+                   (Mouse.current.rightButton.isPressed && staminaBar.IsFull()))
+                {
+                    dashParticles.SetActive(true);
+                    if (dashPs != null) dashPs.Play(withChildren: true);
+                }
+                else if (Mouse.current.rightButton.wasReleasedThisFrame || !staminaBar.CanDash())
+                {
+                    if (dashPs != null) dashPs.Stop(withChildren: true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    dashParticles.SetActive(false);
+                }
             }
         }
 
         UpdatePostProcessing();
+        UpdateLoopLaserAudioPitch();
     }
 
     // ── circle gesture detection ───────────────────────────────────────────────
@@ -484,6 +580,65 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
         }
     }
 
+    // ── pause flick gesture detection ─────────────────────────────────────────
+
+    void UpdatePauseFlickDetection(Vector2 rawDelta, float dt)
+    {
+        // Tick cooldown.
+        if (_pauseFlickCooldownRemaining > 0f)
+        {
+            _pauseFlickCooldownRemaining = Mathf.Max(0f, _pauseFlickCooldownRemaining - dt);
+            _pauseFlickAccumY      = 0f;
+            _pauseFlickWindowTimer = 0f;
+            return;
+        }
+
+        // Don't allow pausing during a scripted maneuver.
+        if (_flipState != FlipState.None)
+        {
+            _pauseFlickAccumY      = 0f;
+            _pauseFlickWindowTimer = 0f;
+            return;
+        }
+
+        // If already paused, clear state — don't re-trigger.
+        if (SCRIPT_TitleScreen.Instance != null && SCRIPT_TitleScreen.Instance.IsGamePaused)
+        {
+            _pauseFlickAccumY      = 0f;
+            _pauseFlickWindowTimer = 0f;
+            return;
+        }
+
+        // Decay window.
+        _pauseFlickWindowTimer = Mathf.Max(0f, _pauseFlickWindowTimer - dt);
+        if (_pauseFlickWindowTimer <= 0f)
+            _pauseFlickAccumY = 0f;
+
+        float totalSpeed = rawDelta.magnitude / Mathf.Max(dt, 0.0001f);
+
+        // Accumulate downward (negative Y) displacement when moving fast enough.
+        if (totalSpeed >= pauseFlickMinSpeed && rawDelta.y < 0f)
+        {
+            float verticalFraction = Mathf.Abs(rawDelta.y) / rawDelta.magnitude;
+            if (verticalFraction >= pauseFlickMinVerticalFraction)
+            {
+                if (_pauseFlickWindowTimer <= 0f)
+                    _pauseFlickWindowTimer = pauseFlickWindow;
+
+                _pauseFlickAccumY += Mathf.Abs(rawDelta.y);
+            }
+        }
+
+        if (_pauseFlickAccumY >= pauseFlickMinDisplacement)
+        {
+            _pauseFlickAccumY            = 0f;
+            _pauseFlickWindowTimer       = 0f;
+            _pauseFlickCooldownRemaining = pauseFlickCooldown;
+            if (SCRIPT_TitleScreen.Instance != null)
+                SCRIPT_TitleScreen.Instance.TogglePause();
+        }
+    }
+
     void TriggerLoop()
     {
         _flipState      = FlipState.Looping;
@@ -512,18 +667,28 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!_gameStarted) return;
+
         Vector2 mouseDelta    = pendingMouseDelta;
         pendingMouseDelta     = Vector2.zero;
 
         // ── dash: ramp currentSpeed toward target ──────────────────────────────
-        bool  dashing     = Mouse.current.rightButton.isPressed && staminaBar.CanDash();
-        float targetSpeed = dashing ? dashSpeed : flightSpeed;
-        float ramp        = dashing ? dashRampUp : dashRampDown;
+        bool  dashing = Mouse.current.rightButton.isPressed && staminaBar.CanDash();
+        float ramp    = dashing ? dashRampUp : dashRampDown;
 
         if (dashing)
+        {
+            DashHoldTime += Time.fixedDeltaTime;
             staminaBar.UseStamina();
+        }
         else
+        {
+            DashHoldTime = 0f;
             staminaBar.RegenStamina();
+        }
+
+        float holdFrac    = dashHoldRampTime > 0f ? Mathf.Clamp01(DashHoldTime / dashHoldRampTime) : 1f;
+        float targetSpeed = dashing ? EffectiveDashSpeed + holdFrac * dashHoldSpeedBonus : flightSpeed;
 
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed,
                                   1f - Mathf.Exp(-ramp * Time.fixedDeltaTime));
@@ -613,6 +778,8 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
                 currentPitch = Mathf.Clamp(currentPitch, -maxPitchAngle, maxPitchAngle);
                 currentBank  = 0f;
                 currentSpeed *= islandBounceDamping;
+                TakeDamage(maxHealth * 0.1f);
+                if (_playerAudio != null) _playerAudio.PlayIslandBounce();
 
                 // Abort any active scripted maneuver.
                 if (_flipState != FlipState.None)
@@ -823,6 +990,44 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             _loopLasers.Add(go);
             fired++;
         }
+
+        if (fired > 0)
+            StartLoopLaserAudio();
+    }
+
+    void StartLoopLaserAudio()
+    {
+        if (_loopLaserAudioSource == null) return;
+
+        AudioClip clip = (_laserController != null) ? _laserController.laserSFX : null;
+        if (clip == null) return;
+
+        float normalLaserVolume = (_laserController != null) ? _laserController.volume : 0.5f;
+
+        _loopLaserAudioSource.Stop();
+        _loopLaserAudioSource.clip = clip;
+        _loopLaserAudioSource.volume = normalLaserVolume * 0.5f;
+        _loopLaserPitchOffset              = SCRIPT_AudioManager.RandomPitch() - 1f;
+        _loopLaserAudioSource.pitch        = loopLaserBasePitch + _loopLaserPitchOffset;
+        _loopLaserAudioSource.loop         = true;
+        _loopLaserAudioSource.Play();
+
+        _loopLaserAudioDuration = Mathf.Max(0.01f, _loopDuration - _flipTimer);
+        _loopLaserAudioTimer = 0f;
+        _loopLaserAudioPlaying = true;
+    }
+
+    void StopLoopLaserAudio()
+    {
+        if (_loopLaserAudioSource != null)
+        {
+            _loopLaserAudioSource.Stop();
+            _loopLaserAudioSource.pitch = loopLaserBasePitch;
+        }
+
+        _loopLaserAudioPlaying = false;
+        _loopLaserAudioTimer = 0f;
+        _loopLaserAudioDuration = 0f;
     }
 
     void StopLoopLasers()
@@ -836,13 +1041,34 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
             Destroy(go);
         }
         _loopLasers.Clear();
+        StopLoopLaserAudio();
+    }
+
+    void OnDisable()
+    {
+        StopLoopLasers();
     }
 
     // ── health ─────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Called by SCRIPT_PlayerStats when a MaxHealthIncrease upgrade is collected.
+    /// Scales maxHealth by <paramref name="multiplier"/> and heals the player by the gained amount.
+    /// </summary>
+    public void IncreaseMaxHealth(float multiplier)
+    {
+        float gained   = maxHealth * (multiplier - 1f);
+        maxHealth     *= multiplier;
+        _currentHealth = Mathf.Min(_currentHealth + gained, maxHealth);
+        if (healthBar != null)
+            healthBar.ExpandMax(maxHealth, _currentHealth);
+    }
+
     public void TakeDamage(float amount)
     {
         if (!IsAlive || IsDashing) return;
+        // Sync with the health bar, which tracks regen independently.
+        if (healthBar != null) _currentHealth = healthBar.CurrentHealth;
         _currentHealth = Mathf.Max(-10f, _currentHealth - amount);
 
         healthBar.SetHealth(_currentHealth);
@@ -949,7 +1175,7 @@ public class SCRIPT_PlayerMovementController : MonoBehaviour
 
     void UpdatePostProcessing()
     {
-        float dashT = Mathf.InverseLerp(flightSpeed, dashSpeed, currentSpeed);
+        float dashT = Mathf.InverseLerp(flightSpeed, EffectiveDashSpeed, currentSpeed);
         float t     = 1f - Mathf.Exp(-ppBlendSpeed * Time.deltaTime);
 
         if (lensDistortion != null)

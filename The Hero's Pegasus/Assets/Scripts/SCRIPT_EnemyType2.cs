@@ -54,10 +54,29 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
     [Tooltip("Lead-aim at where the player will be when the projectile arrives.")]
     public bool usePredictiveAim = true;
 
+    // ── public state ───────────────────────────────────────────────────────────
+
+    /// <summary>True for a brief window after each shot — used to drive the attack animation layer.</summary>
+    public bool IsFireAttackActive => _attackActive;
+
+    [Header("Type 2: Charge Evasion")]
+    [Tooltip("Dot product of player-forward vs. direction-to-us above which we flee. " +
+             "0.85 ≈ 32° cone, 0.95 ≈ 18° cone. Higher = only flee when aimed nearly dead-on.")]
+    [Range(0f, 1f)]
+    public float chargeEvasionDot = 0.85f;
+    [Tooltip("Max distance at which an incoming charge triggers evasion.")]
+    public float chargeEvasionRange = 40f;
+
+    [Header("Type 2: Attack Animation")]
+    [Tooltip("How long the attack animation layer stays blended in after each shot (seconds).")]
+    public float attackAnimDuration = 0.35f;
+
     // ── private state ──────────────────────────────────────────────────────────
 
     private float   _fireCooldown;
     private int     _orbitDir;        // +1 = CW, -1 = CCW, randomised on spawn
+    private bool    _attackActive;
+    private float   _attackTimer;
 
     private Vector3 _prevPlayerPos;
     private Vector3 _playerVelocity;
@@ -84,6 +103,13 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
     {
         _fireCooldown -= Time.deltaTime;
 
+        if (_attackActive)
+        {
+            _attackTimer -= Time.deltaTime;
+            if (_attackTimer <= 0f)
+                _attackActive = false;
+        }
+
         if (playerTarget == null) return;
 
         // Estimate player velocity from frame-to-frame position delta.
@@ -96,6 +122,24 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
         {
             FireProjectile();
             _fireCooldown = 1f / Mathf.Max(fireRate, 0.01f);
+            _attackActive = true;
+            _attackTimer  = attackAnimDuration;
+        }
+
+        // Charge evasion: if the player is aimed directly at us and close enough, flee.
+        if (!IsEscapeOnCooldown
+            && _state != FlightState.Fleeing
+            && _state != FlightState.Evading
+            && _state != FlightState.DashStriking)
+        {
+            Vector3 toSelf = transform.position - playerTarget.position;
+            float dist = toSelf.magnitude;
+            if (dist < chargeEvasionRange)
+            {
+                float dot = Vector3.Dot(playerTarget.forward, toSelf / dist);
+                if (dot > chargeEvasionDot)
+                    EnterFleeing();
+            }
         }
     }
 
@@ -130,7 +174,7 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
         Vector3 origin = firePoint.position;
 
         Vector3 aimTarget = usePredictiveAim
-            ? PredictPosition(origin, playerTarget.position, _playerVelocity, projectileSpeed)
+            ? PredictPosition(origin, playerTarget.position, _playerVelocity, projectileSpeed)  
             : playerTarget.position;
 
         Vector3 baseDir = (aimTarget - origin).normalized;
@@ -145,7 +189,7 @@ public class SCRIPT_EnemyType2 : SCRIPT_EnemyBase
         if (projectileFireClip != null)
         {
             AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
-                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null; 
             SCRIPT_AudioManager.PlayClipAtPoint(projectileFireClip, origin, sfx);
         }
 

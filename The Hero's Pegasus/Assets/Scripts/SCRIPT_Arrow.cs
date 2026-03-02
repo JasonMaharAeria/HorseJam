@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Projectile fired by the hero. Travels forward at a fixed speed. On first contact
@@ -16,6 +17,8 @@ public class SCRIPT_Arrow : MonoBehaviour
 {
     [Tooltip("How many seconds the arrow travels before destroying itself if it never hits anything.")]
     public float maxLifetime = 6f;
+    [Tooltip("Clip played at the impact point when the arrow hits an enemy.")]
+    public AudioClip hitSFX;
 
     // ── set by SCRIPT_Hero.FireArrow ───────────────────────────────────────────
 
@@ -67,6 +70,13 @@ public class SCRIPT_Arrow : MonoBehaviour
 
         // Deal damage exactly once.
         enemy.TakeDamage(_damage, transform.position);
+
+        if (hitSFX != null)
+        {
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(hitSFX, transform.position, sfx);
+        }
 
         Embed(other.transform);
     }

@@ -44,6 +44,13 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
     [Tooltip("How far to the side of the player the enemy targets during the dash (world units).")]
     public float sideOffset = 6f;
 
+    [Header("Post-Breath Retreat")]
+    [Tooltip("How long the enemy retreats after the breath attack before resuming pursuit.")]
+    public float retreatDuration = 5f;
+    [Tooltip("Max distance from the player the enemy will drift during retreat. " +
+             "If it exceeds this, it curves back toward this shell radius.")]
+    public float retreatMaxDistance = 60f;
+
     [Header("AOE Audio")]
     [Tooltip("Played at the enemy's position each time the AOE cone activates (first strike and every repeat).")]
     public AudioClip aoeActivationClip;
@@ -56,6 +63,11 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
     public float aoeActivationRadius = 8f;
     [Tooltip("How long the AOE fires before being deactivated and the strike ending.")]
     public float aoeDuration = 1.5f;
+
+    // ── public state ───────────────────────────────────────────────────────────
+
+    /// <summary>True while the breath cone particle system is actively firing.</summary>
+    public bool IsBreathAttackActive => _aoeActive;
 
     // ── private state ──────────────────────────────────────────────────────────
 
@@ -97,6 +109,8 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
             _aoePs    = aoeParticleObject.GetComponentInChildren<ParticleSystem>();
             _aoeRelay = aoeParticleObject.GetComponentInChildren<SCRIPT_AOEHitRelay>();
 
+            Debug.Log($"[EnemyType3] aoeParticleObject={aoeParticleObject.name}  _aoePs={(_aoePs != null ? _aoePs.name : "NULL")}  _aoeRelay={(_aoeRelay != null ? "found" : "NULL")}  _playerHealth={(_playerHealth != null ? "found" : "NULL")}");
+
             if (_aoeRelay != null)
             {
                 _aoeRelay.damagePerParticle = damageOnCollision;
@@ -104,6 +118,10 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
             }
 
             aoeParticleObject.SetActive(false);
+        }
+        else
+        {
+            Debug.LogWarning("[EnemyType3] aoeParticleObject is NULL — AOE will not fire.", this);
         }
     }
 
@@ -172,7 +190,7 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
 
         _strikeCooldownRemaining = dashStrikeCooldown;
 
-        base.ExitDashStriking(); // → EnterPursuing()
+        EnterRetreating(retreatDuration); // fly away before resuming pursuit
     }
 
     // ── AOE helpers ────────────────────────────────────────────────────────────
@@ -240,5 +258,23 @@ public class SCRIPT_EnemyType3 : SCRIPT_EnemyBase
         // Aim for a point beside the player rather than directly at them.
         Vector3 dashTarget = playerTarget.position + lateral * (_sideSign * sideOffset);
         return (dashTarget - transform.position).normalized;
+    }
+
+    protected override Vector3 GetRetreatingHeading()
+    {
+        if (playerTarget == null) return transform.forward;
+
+        Vector3 toPlayer = playerTarget.position - transform.position;
+        float dist = toPlayer.magnitude;
+        if (dist < 0.001f) return transform.forward;
+
+        Vector3 awayDir = -toPlayer / dist;
+
+        // Target a point on the surface of a sphere of radius retreatMaxDistance,
+        // directly away from the player. If we're inside the sphere we head toward
+        // that point (away). If we've overshot it, the point is back toward the
+        // player, so we naturally arc back in — no explicit branch needed.
+        Vector3 retreatTarget = playerTarget.position + awayDir * retreatMaxDistance;
+        return (retreatTarget - transform.position).normalized;
     }
 }

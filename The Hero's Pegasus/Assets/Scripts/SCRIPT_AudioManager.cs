@@ -95,9 +95,19 @@ public class SCRIPT_AudioManager : MonoBehaviour
         src.outputAudioMixerGroup = group;
         src.volume                = volume;
         src.spatialBlend          = 1f;
+        src.pitch                 = RandomPitch();
         src.Play();
         Destroy(go, clip.length + 0.1f);
     }
+
+    // ── Pitch Randomisation ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns a random pitch multiplier in [0.9, 1.1].
+    /// Apply to an AudioSource.pitch (or pass as a scale) before playing any SFX
+    /// to give each sound a subtle natural variation.
+    /// </summary>
+    public static float RandomPitch() => Random.Range(0.9f, 1.1f);
 
     // ── Conversion helpers ────────────────────────────────────────────────────
 

@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 4405604858993919711}
   - component: {fileID: 6283976494197455429}
   - component: {fileID: 6526892700965336871}
+  - component: {fileID: 9057433516240412078}
   m_Layer: 0
   m_Name: FAB_Pegasus
   m_TagString: Player
@@ -135,8 +136,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_PlayerMovementController
   flightSpeed: 65.7
-  dashSpeed: 100
-  dashRampUp: 8
+  dashSpeed: 120
+  dashRampUp: 15
   dashRampDown: 3
   dashParticles: {fileID: 7730816890873377192}
   gravitySpeedBonus: 30
@@ -162,13 +163,13 @@ MonoBehaviour:
   maxHealth: 100
   _currentHealth: 0
   dashKillRadius: 3
-  flipVerticalDuration: 0.2
+  flipVerticalDuration: 0.5
   flipHorizontalDuration: 0.24
   flipSlowMultiplier: 0.215
   burstSpeed: 90
   burstDurationSeconds: 0.4
   flipCooldownSeconds: 2
-  flipParticles: {fileID: 0}
+  flipParticles: {fileID: 648852946644775224, guid: 075b0edf74f000d479efdbfb5808aaf0, type: 3}
   loopFlickMinSpeed: 500
   loopFlickWindow: 0.2
   loopFlickMinDisplacement: 300
@@ -180,6 +181,8 @@ MonoBehaviour:
   loopFireRange: 200
   loopMaxTargets: 6
   loopLaserPrefab: {fileID: 8413779181450100190, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+  loopLaserBasePitch: 1
+  loopLaserPeakPitch: 1.2
   islandLayerMask:
     serializedVersion: 2
     m_Bits: 128
@@ -204,6 +207,56 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_LaserController
   laserParticles: {fileID: 334107922181665287}
+  laserSFX: {fileID: 8300000, guid: 92b66b1424f43d04e86d575662b9f208, type: 3}
+  volume: 0.137
+  layerStartOffset: 0.33
+  releaseFadeTime: 0.2
+--- !u!114 &9057433516240412078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 98775198429567176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 236f69902d232c34eb83adb0550638dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_PlayerAudio
+  wingFlapClip: {fileID: 8300000, guid: 304a9b96d2139684f8e9469d7344ea8e, type: 3}
+  windRushClip: {fileID: 8300000, guid: 29865d18ee6fd204e9528d9fc7d1f941, type: 3}
+  damageClip: {fileID: 8300000, guid: 3509112fac438994fa658749f5152220, type: 3}
+  islandBounceClip: {fileID: 8300000, guid: bd81d10b1672a3542a76aa05e2e51f99, type: 3}
+  heartbeatClip: {fileID: 8300000, guid: 99314c6fd21b2264788e19444aec739e, type: 3}
+  laserLoopClip: {fileID: 0}
+  dashLoopClip: {fileID: 8300000, guid: 28b9f6b83950d7d4e8eaa329912ccee9, type: 3}
+  backgroundMusicClip: {fileID: 8300000, guid: 1d85015977138ec42b6f6caa23f728df, type: 3}
+  sfxMasterVolume: 1
+  wingFlapVolume: 0.709
+  damageVolume: 1
+  islandBounceVolume: 0.66
+  laserLoopVolume: 1
+  dashLoopVolume: 0.845
+  heartbeatVolumeMultiplier: 0.839
+  windSFXVolume: 0.3
+  windCooldownTime: 1.5
+  dashPitchFull: 1.2
+  dashPitchEmpty: 0.7
+  dashFadeOutTime: 0.8
+  heartbeatThreshold: 0.33
+  heartbeatVolumeMin: 0.117
+  heartbeatVolumeMax: 0.877
+  heartbeatDoubleBeatGap: 0.18
+  heartbeatRepeatInterval: 1.1
+  heartbeatFadeOutTime: 2
+  flapSoundBlendThreshold: 0.3
+  flapMidpointNormalizedTime: 0.5
+  flapMinInterval: 0.08
+  musicEnemyCountThreshold: 7
+  musicEnemyRange: 800
+  musicHealthThreshold: 0.502
+  musicVolume: 0.426
+  musicFadeTime: 3
 --- !u!1 &111835687137755049
 GameObject:
   m_ObjectHideFlags: 0
@@ -3244,6 +3297,12 @@ MonoBehaviour:
   attackTriggerName: DoAttack
   attackVariantParam: AttackVariant
   attackSpeedParam: AttackSpeed
+  bowReleaseSFX: {fileID: 0}
+  bowReleaseVolume: 1
+  upperBodyYawLimit: 70
+  upperBodyPitchUpLimit: 45
+  upperBodyPitchDownLimit: 35
+  upperBodyAimSmoothing: 14
 --- !u!1 &4216640242669403269
 GameObject:
   m_ObjectHideFlags: 0
@@ -6040,7 +6099,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_Hero
   arrowPrefab: {fileID: 5700400001760814419, guid: 6ff9975be41dbcb4999ed27f988420bc, type: 3}
-  arrowVelocity: 130.3
+  arrowVelocity: 160
   arrowDamage: 2
   fireRate: 2
   aimOffsetDegrees: 3
@@ -6059,6 +6118,12 @@ MonoBehaviour:
   attackTriggerName: DoAttack
   attackVariantParam: AttackVariant
   attackSpeedParam: AttackSpeed
+  bowReleaseSFX: {fileID: 8300000, guid: 131147ea09acd1544a87d963f09e940e, type: 3}
+  bowReleaseVolume: 1
+  upperBodyYawLimit: 70
+  upperBodyPitchUpLimit: 45
+  upperBodyPitchDownLimit: 35
+  upperBodyAimSmoothing: 14
 --- !u!1 &8543849386304585076
 GameObject:
   m_ObjectHideFlags: 0
@@ -7012,8 +7077,16 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: InheritVelocityModule.m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: VelocityModule.radial.scalar
       value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: InheritVelocityModule.enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: InitialModule.startSize.scalar
@@ -7037,7 +7110,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: InitialModule.startSpeed.scalar
-      value: 110
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: CollisionModule.collisionMessages
@@ -7061,6 +7134,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
       propertyPath: InitialModule.startColor.maxColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}
+      propertyPath: InheritVelocityModule.m_Curve.scalar
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2531541711029590129, guid: bba1f912eb767974c959919bc1d7419d, type: 3}

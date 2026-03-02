@@ -45,6 +45,12 @@ public class SCRIPT_IslandManager : MonoBehaviour
              "Prevents islands spawning inside each other.")]
     public float initialIslandMinSeparation = 25f;
 
+    [Header("Initial Scale Variation")]
+    [Tooltip("Minimum spawned island size as a percent of prefab scale.")]
+    [Min(0f)] public float initialScaleMinPercent = 100f;
+    [Tooltip("Maximum spawned island size as a percent of prefab scale.")]
+    [Min(0f)] public float initialScaleMaxPercent = 300f;
+
     // ── private state ──────────────────────────────────────────────────────────
     private Transform[] _islands;
 
@@ -85,7 +91,7 @@ public class SCRIPT_IslandManager : MonoBehaviour
 
             float dist = Vector3.Distance(_islands[i].position, playerPos);
             if (dist > recycleDistance)
-                Reposition(i, playerPos);
+                Reposition(i, playerPos);  
         }
     }
 
@@ -101,6 +107,7 @@ public class SCRIPT_IslandManager : MonoBehaviour
             Vector3    pos    = InitialPosition(i, player.position);
 
             GameObject go = Instantiate(prefab, pos, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+            go.transform.localScale *= RandomInitialScaleMultiplier();
             go.name = $"Island_{i:00}";
 
             // Ensure the marker component is present.
@@ -108,7 +115,17 @@ public class SCRIPT_IslandManager : MonoBehaviour
                 go.AddComponent<SCRIPT_FloatingIsland>();
 
             _islands[i] = go.transform;
+
+            // Give the upgrade manager a chance to spawn a pickup above this island.
+            SCRIPT_UpgradeManager.Instance?.TrySpawnAbove(_islands[i]);
         }
+    }
+
+    float RandomInitialScaleMultiplier()
+    {
+        float minPct = Mathf.Max(0f, Mathf.Min(initialScaleMinPercent, initialScaleMaxPercent));
+        float maxPct = Mathf.Max(minPct, Mathf.Max(initialScaleMinPercent, initialScaleMaxPercent));
+        return Random.Range(minPct, maxPct) * 0.01f;
     }
 
     // Picks an initial position that respects player clearance and tries to
@@ -158,10 +175,18 @@ public class SCRIPT_IslandManager : MonoBehaviour
 
     void Reposition(int index, Vector3 playerPos)
     {
+        // Destroy any uncollected upgrade pickup parented to this island before it moves.
+        SCRIPT_UpgradePickup existingUpgrade = _islands[index].GetComponentInChildren<SCRIPT_UpgradePickup>();
+        if (existingUpgrade != null)
+            Destroy(existingUpgrade.gameObject);
+
         Vector3 newPos = RecyclePosition(playerPos);
         _islands[index].position = newPos;
         // Keep the existing random rotation — or randomise again for variety.
         _islands[index].rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+        // Give the upgrade manager a chance to spawn a pickup above the recycled island.
+        SCRIPT_UpgradeManager.Instance?.TrySpawnAbove(_islands[index]);
     }
 
     // Picks a recycle position at least recycleMinDist from the player,
@@ -193,4 +218,3 @@ public class SCRIPT_IslandManager : MonoBehaviour
     }
 
 }
-

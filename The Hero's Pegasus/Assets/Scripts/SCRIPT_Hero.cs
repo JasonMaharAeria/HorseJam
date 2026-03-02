@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 /// <summary>
 /// Controls the hero sitting on top of the pegasus.
@@ -65,6 +66,13 @@ public class SCRIPT_Hero : MonoBehaviour
     [Tooltip("Name of the Animator float parameter used to scale animation speed.")]
     public string attackSpeedParam = "AttackSpeed";
 
+    [Header("Audio")]
+    [Tooltip("Played at the fire point each time an arrow is released.")]
+    public AudioClip bowReleaseSFX;
+    [Tooltip("Volume multiplier for the bow release SFX.")]
+    [Range(0f, 1f)]
+    public float bowReleaseVolume = 1f;
+
     [Header("Upper-Body Aim")]
     [Tooltip("Maximum left/right swivel from the bind pose (degrees).")]
     public float upperBodyYawLimit = 70f;
@@ -74,6 +82,12 @@ public class SCRIPT_Hero : MonoBehaviour
     public float upperBodyPitchDownLimit = 35f;
     [Tooltip("How quickly the upper body approaches the target pose. Higher = snappier.")]
     public float upperBodyAimSmoothing = 14f;
+
+    // ── computed ───────────────────────────────────────────────────────────────
+
+    // Base fireRate scaled by any AttackSpeedIncrease upgrades collected so far.
+    float EffectiveFireRate => fireRate *
+        (SCRIPT_PlayerStats.Instance != null ? SCRIPT_PlayerStats.Instance.AttackSpeedMultiplier : 1f);
 
     // ── private state ──────────────────────────────────────────────────────────
 
@@ -226,7 +240,7 @@ public class SCRIPT_Hero : MonoBehaviour
     void UpdateAnimatedAttack()
     {
         // Keep animation speed proportional to the desired fire rate.
-        heroAnimator.SetFloat(attackSpeedParam, fireRate / Mathf.Max(referenceFireRate, 0.01f));
+        heroAnimator.SetFloat(attackSpeedParam, EffectiveFireRate / Mathf.Max(referenceFireRate, 0.01f));
 
         // Check if any fire variation state has reached the arrow-release point.
         AnimatorStateInfo state = heroAnimator.GetCurrentAnimatorStateInfo(animatorLayer);
@@ -246,7 +260,7 @@ public class SCRIPT_Hero : MonoBehaviour
             heroAnimator.SetInteger(attackVariantParam, variant);
             heroAnimator.SetTrigger(attackTriggerName);
             _arrowFiredThisCycle = false;
-            _fireCooldown = 1f / Mathf.Max(fireRate, 0.01f);
+            _fireCooldown = 1f / Mathf.Max(EffectiveFireRate, 0.01f);
         }
     }
 
@@ -264,7 +278,7 @@ public class SCRIPT_Hero : MonoBehaviour
         if (_fireCooldown <= 0f && arrowPrefab != null)
         {
             FireArrow(_currentAimDir);
-            _fireCooldown = 1f / Mathf.Max(fireRate, 0.01f);
+            _fireCooldown = 1f / Mathf.Max(EffectiveFireRate, 0.01f);
         }
     }
 
@@ -343,9 +357,30 @@ public class SCRIPT_Hero : MonoBehaviour
                        * Quaternion.Euler(pitch, yaw, 0f)
                        * Vector3.forward;
 
+        if (bowReleaseSFX != null)
+        {
+            AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                      ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+            SCRIPT_AudioManager.PlayClipAtPoint(bowReleaseSFX, firePoint.position, sfx, bowReleaseVolume);
+        }
+
         GameObject   obj   = Instantiate(arrowPrefab, firePoint.position, Quaternion.LookRotation(aimDir));
+
+        // Apply any accumulated arrow-size upgrades.
+        float sizeMultiplier = SCRIPT_PlayerStats.Instance != null
+                             ? SCRIPT_PlayerStats.Instance.ArrowSizeMultiplier
+                             : 1f;
+        if (sizeMultiplier != 1f)
+            obj.transform.localScale *= sizeMultiplier;
+
         SCRIPT_Arrow arrow = obj.GetComponent<SCRIPT_Arrow>();
         if (arrow != null)
-            arrow.Init(arrowDamage, arrowVelocity, _heroVelocity);
+        {
+            float damageMultiplier   = SCRIPT_PlayerStats.Instance != null
+                                     ? SCRIPT_PlayerStats.Instance.ArrowDamageMultiplier   : 1f;
+            float velocityMultiplier = SCRIPT_PlayerStats.Instance != null
+                                     ? SCRIPT_PlayerStats.Instance.ArrowVelocityMultiplier : 1f;
+            arrow.Init(arrowDamage * damageMultiplier, arrowVelocity * velocityMultiplier, _heroVelocity);
+        }
     }
 }

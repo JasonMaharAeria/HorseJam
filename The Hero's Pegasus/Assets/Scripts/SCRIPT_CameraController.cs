@@ -50,6 +50,10 @@ public class SCRIPT_CameraController : MonoBehaviour
     private bool    holdCameraActive;
     private Vector3 heldForward;
 
+    // Rear-view (middle mouse)
+    private bool _rearView;
+    private bool _wasRearView;
+
     // Loop cinematic state
     private bool  _wasLooping;
     private float _loopStartDistance;  // captured at loop start so zoom interpolates from here
@@ -93,6 +97,8 @@ public class SCRIPT_CameraController : MonoBehaviour
                 holdCameraActive = false;
             }
         }
+
+        _rearView = Mouse.current.middleButton.isPressed;
 
         HandleScroll();
 
@@ -141,7 +147,37 @@ public class SCRIPT_CameraController : MonoBehaviour
                       + target.up    * heightOffset
                       + target.right * lateralOffset;
 
-        Vector3 followForward  = holdCameraActive ? heldForward : target.forward;
+        Vector3 followForward = holdCameraActive ? heldForward : target.forward;
+
+        // ── Middle-mouse rear view: instant snap, instant revert ───────────────
+        if (_rearView)
+        {
+            Vector3 rearPos  = pivot + followForward * distance;
+            transform.position = rearPos;
+            positionVelocity   = Vector3.zero;
+            Vector3 rearLook   = (pivot - rearPos).normalized;
+            smoothLookDir      = rearLook;
+            if (rearLook.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(rearLook);
+            _wasRearView = true;
+            return;
+        }
+
+        if (_wasRearView)
+        {
+            // First frame after release — snap directly back to the normal position.
+            Vector3 snapPos  = pivot - followForward * distance;
+            transform.position = snapPos;
+            positionVelocity   = Vector3.zero;
+            Vector3 snapLook   = (pivot - snapPos).normalized;
+            smoothLookDir      = snapLook;
+            if (snapLook.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(snapLook);
+            _wasRearView = false;
+            return;
+        }
+        // ──────────────────────────────────────────────────────────────────────
+
         Vector3 desiredPosition = pivot - followForward * distance;
 
         transform.position = Vector3.SmoothDamp(

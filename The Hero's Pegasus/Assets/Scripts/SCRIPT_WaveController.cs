@@ -62,6 +62,10 @@ public class SCRIPT_WaveController : MonoBehaviour
     public AnimationCurve type3Curve = new AnimationCurve(
         new Keyframe(1, 0), new Keyframe(7, 1));
 
+    [Header("Startup")]
+    [Tooltip("If true, waves begin automatically on Start. Set false when a title screen controls the start via StartWaves().")]
+    public bool startOnLoad = true;
+
     // ── runtime state (read-only, visible in inspector for live debugging) ─────
     [Header("Runtime State (read-only)")]
     [SerializeField] private int   _currentWave = 1;
@@ -81,6 +85,7 @@ public class SCRIPT_WaveController : MonoBehaviour
     [SerializeField] private int   _aliveCount;
 
     private float _spawnTimer;
+    private bool  _hasStarted;
     private readonly List<SCRIPT_EnemyBase> _activeEnemies = new List<SCRIPT_EnemyBase>();
     private AudioSource _waveAudioSource;
 
@@ -105,6 +110,17 @@ public class SCRIPT_WaveController : MonoBehaviour
         _waveAudioSource.spatialBlend          = 0f;
         _waveAudioSource.playOnAwake           = false;
 
+        if (startOnLoad) StartWaves();
+    }
+
+    /// <summary>
+    /// Begin wave spawning. Called automatically if startOnLoad is true;
+    /// otherwise call this from SCRIPT_TitleScreen when Play is pressed.
+    /// </summary>
+    public void StartWaves()
+    {
+        if (_hasStarted) return;
+        _hasStarted = true;
         RefreshWaveParams();
         PlayWaveSound(waveStartClip);
         Debug.Log($"[WaveController] Wave {_currentWave} started. " +
@@ -113,7 +129,7 @@ public class SCRIPT_WaveController : MonoBehaviour
 
     void Update()
     {
-        if (IsStopped) return;
+        if (!_hasStarted || IsStopped) return;
 
         _phaseTimer += Time.deltaTime;
 
@@ -145,12 +161,14 @@ public class SCRIPT_WaveController : MonoBehaviour
 
     void StartNextWave()
     {
+        int previousWave = _currentWave;
         _currentWave++;
         _inReprieve  = false;
         _phaseTimer  = 0f;
         _spawnTimer  = 0f;
         RefreshWaveParams();
         PlayWaveSound(waveStartClip);
+        SCRIPT_UpgradeNotification.Instance?.ShowWaveTransition(previousWave, _currentWave);
         Debug.Log($"[WaveController] Wave {_currentWave} started. " +
                   $"Interval={_spawnInterval:F1}s  MaxConcurrent={_maxConcurrent}");
     }
@@ -214,6 +232,7 @@ public class SCRIPT_WaveController : MonoBehaviour
     void PlayWaveSound(AudioClip clip)
     {
         if (_waveAudioSource == null || clip == null) return;
+        _waveAudioSource.pitch = SCRIPT_AudioManager.RandomPitch();
         _waveAudioSource.PlayOneShot(clip);
     }
 

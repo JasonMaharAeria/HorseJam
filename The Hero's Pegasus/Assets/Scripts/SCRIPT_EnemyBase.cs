@@ -23,7 +23,8 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
         Diving,       // pitch down while generally facing the player
         Fleeing,      // fly straight (no tracking) — escape wind-up
         Evading,      // sharp diagonal break — escape maneuver
-        DashStriking  // subclass strike mode: boosted speed/tracking, flies directly at player
+        DashStriking, // subclass strike mode: boosted speed/tracking, flies directly at player
+        Retreating    // fly away from player while staying within retreatMaxDistance
     }
 
     // ── inspector ──────────────────────────────────────────────────────────────
@@ -110,6 +111,12 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     public float islandImpactDamageThreshold = 10f;
     [Tooltip("Damage dealt per unit of speed above islandImpactDamageThreshold on impact.")]
     public float islandImpactDamageMultiplier = 5f;
+    [Tooltip("Clip played at the impact point when the enemy collides with terrain hard enough to take damage.")]
+    public AudioClip islandImpactSFX;
+
+    [Header("Despawn")]
+    [Tooltip("Destroy this enemy if it drifts farther than this from the player. 0 = disabled.")]
+    public float despawnDistance = 300f;
 
     [Header("Behavior — Escape")]
     [Tooltip("Dot product of forward vs. to-player below which an escape triggers. " +
@@ -124,6 +131,9 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     public float   escapeCooldown     = 5f;
 
     // ── runtime state (visible in inspector for live debugging) ───────────────
+
+    /// <summary>True while the enemy is in the DashStriking state.</summary>
+    public bool IsDashStriking => _state == FlightState.DashStriking;
 
     [Header("Runtime State (read-only)")]
     [SerializeField] protected FlightState _state            = FlightState.Pursuing;
@@ -188,6 +198,17 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     void FixedUpdate()
     {
         if (playerTarget == null) return;
+
+        // Despawn if the enemy has drifted too far from the player.
+        if (despawnDistance > 0f)
+        {
+            float sqrDespawn = despawnDistance * despawnDistance;
+            if ((transform.position - playerTarget.position).sqrMagnitude > sqrDespawn)
+            {
+                Destroy(gameObject);
+                return;
+            }
+        }
 
         UpdateBehaviorState();
 
@@ -281,6 +302,11 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
                 if (_stateTimeRemaining <= 0f)
                     ExitDashStriking();
                 break;
+
+            case FlightState.Retreating:
+                if (_stateTimeRemaining <= 0f)
+                    EnterPursuing();
+                break;
         }
     }
 
@@ -332,11 +358,20 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
         _stateTimeRemaining = Random.Range(pitchDuration.x, pitchDuration.y);
     }
 
-    void EnterFleeing()
+    protected void EnterFleeing()
     {
         _state              = FlightState.Fleeing;
         _stateTimeRemaining = Random.Range(fleeDuration.x, fleeDuration.y);
     }
+
+    protected void EnterRetreating(float duration)
+    {
+        _state              = FlightState.Retreating;
+        _stateTimeRemaining = duration;
+    }
+
+    /// <summary>True while the escape flee→evade cooldown is active.</summary>
+    protected bool IsEscapeOnCooldown => _escapeCooldown > 0f;
 
     void EnterEvading()
     {
@@ -394,6 +429,10 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
 
             case FlightState.DashStriking:
                 rawHeading = GetDashStrikeHeading();
+                break;
+
+            case FlightState.Retreating:
+                rawHeading = GetRetreatingHeading();
                 break;
 
             default:
@@ -454,6 +493,14 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
         {
             float damage = (flightSpeed - islandImpactDamageThreshold)
                          * islandImpactDamageMultiplier;
+
+            if (islandImpactSFX != null)
+            {
+                AudioMixerGroup sfx = SCRIPT_AudioManager.Instance != null
+                                          ? SCRIPT_AudioManager.Instance.sfxGroup : null;
+                SCRIPT_AudioManager.PlayClipAtPoint(islandImpactSFX, transform.position, sfx);
+            }
+
             TakeDamage(damage, transform.position);
         }
     }
@@ -516,5 +563,15 @@ public abstract class SCRIPT_EnemyBase : MonoBehaviour
     protected virtual Vector3 GetDesiredHeading()
     {
         return playerTarget.position - transform.position;
+    }
+
+    /// <summary>
+    /// World-space heading while in the Retreating state. Default: directly away from player.
+    /// Override to add range clamping or other retreat flavoring.
+    /// </summary>
+    protected virtual Vector3 GetRetreatingHeading()
+    {
+        if (playerTarget == null) return transform.forward;
+        return (transform.position - playerTarget.position).normalized;
     }
 }
