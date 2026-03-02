@@ -530,10 +530,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74a5a8a8a219cb84da0d20b151ff6226, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SCRIPT_WaveController
-  enemyType1Prefab: {fileID: 5702237517316903803, guid: 442ff9af00a5168488c1460ef59a9623, type: 3}
+  enemyType1Prefab: {fileID: 3867245647434311917, guid: fbd4cee44ab39514c94cd005f90b38eb, type: 3}
   enemyType2Prefab: {fileID: 6374900675795132415, guid: f5288adeb299a8d448accbc881cec9f3, type: 3}
   enemyType3Prefab: {fileID: 5702237517316903803, guid: 442ff9af00a5168488c1460ef59a9623, type: 3}
-  waveDuration: 60
+  waveDuration: 30
   repriveDuration: 5
   spawnCenter: {fileID: 1619109419}
   spawnRadius: 150
@@ -543,8 +543,8 @@ MonoBehaviour:
   startMaxConcurrent: 5
   concurrentIncreasePerWave: 3
   maxConcurrentCap: 300
-  waveStartClip: {fileID: 0}
-  waveCompleteClip: {fileID: 0}
+  waveStartClip: {fileID: 8300000, guid: e1285f2795448f2488b39aaf5f113c47, type: 3}
+  waveCompleteClip: {fileID: 8300000, guid: c46e2909efc8964419e3941ceb8dd880, type: 3}
   type1Curve:
     serializedVersion: 2
     m_Curve:
@@ -1099,6 +1099,14 @@ PrefabInstance:
     - target: {fileID: 6663711219662698710, guid: 009943300ed08a642a1b9a7cb9b9b0c1, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -251.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 6809683341447229017, guid: 009943300ed08a642a1b9a7cb9b9b0c1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 7bb7a2129fc9426469c05ed952db0c2d, type: 3}
+    - target: {fileID: 6809683341447229017, guid: 009943300ed08a642a1b9a7cb9b9b0c1, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7836187041723554363, guid: 009943300ed08a642a1b9a7cb9b9b0c1, type: 3}
       propertyPath: m_fontSize

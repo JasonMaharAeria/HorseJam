@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls -lh)",
+      "Bash(xargs ls -la)",
+      "Bash(sort -k5 -rn)",
+      "Bash(python3 -:*)",
+      "Bash(node -e \":*)",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(du -sh \"c:/Users/groun/Desktop/GIT_REPOS/HorseJam/The Hero''s Pegasus/Assets\"/*)",
+      "Bash(sort -k5 -rh)",
+      "Bash(xargs grep -l \"WebGL\\\\|loadType\\\\|compressionFormat\")",
+      "Bash(xargs -I{} cat {})"
+    ]
+  }
+}
